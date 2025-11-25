@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<link rel="shortcut icon" href="download.jfif" type="image/x-icon">
+<title>Torneio Dupla Eliminação</title>
+<style>
+body { font-family: Arial; background: #f3f3f3; padding: 20px; }
+.box { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+button { padding: 8px 15px; margin: 5px; cursor: pointer; }
+.partida { background:#ececec; padding:10px; margin:5px 0; border-radius:5px; }
+</style>
+</head>
+<body>
+
+<h1>🔵 Torneio Dupla Eliminação</h1>
+
+<div class="box">
+    <h2>Cadastro</h2>
+    <input id="nomeJogador" placeholder="Nome">
+    <button onclick="addJogador()">Adicionar</button>
+    <ul id="listaJogadores"></ul>
+</div>
+
+<div class="box">
+    <h2>Gerar Confrontos</h2>
+    <button onclick="gerarAutomatico()">🎲 Sorteio Automático</button>
+    <button onclick="modoManual()">📝 Manual</button>
+    <button onclick="resetarTudo()" style="background:red;color:white;">🗑 Resetar Tudo</button>
+</div>
+
+<div class="box" id="manualArea" style="display:none;">
+    <h3>Escolher Confrontos Manuais</h3>
+    <select id="selA"></select>
+    vs
+    <select id="selB"></select>
+    <button onclick="addManual()">Adicionar</button>
+    <ul id="listaManuais"></ul>
+    <button onclick="iniciarManual()">Gerar Torneio</button>
+</div>
+
+<div class="box">
+    <h2>Winners Bracket</h2>
+    <div id="winners"></div>
+</div>
+
+<div class="box">
+    <h2>Losers Bracket</h2>
+    <div id="losers"></div>
+</div>
+
+<div class="box">
+    <h2>Grande Final</h2>
+    <div id="final"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
