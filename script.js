@@ -68,6 +68,12 @@ window.onload = function () {
 };
 
 // ---------- CADASTRO ----------
+function tecla(e){
+  if(e.key === "Enter"){
+    addJogador(); // dispara o botão
+  }
+}
+
 function addJogador(){
     let nome = document.getElementById("nomeJogador").value.trim();
     if(!nome) return;

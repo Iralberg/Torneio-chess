@@ -17,7 +17,7 @@ button { padding: 8px 15px; margin: 5px; cursor: pointer; }
 
 <div class="box">
     <h2>Cadastro</h2>
-    <input id="nomeJogador" placeholder="Nome">
+    <input id="nomeJogador" placeholder="Nome" onkeypress="tecla(event)">
     <button onclick="addJogador()">Adicionar</button>
     <ul id="listaJogadores"></ul>
 </div>
