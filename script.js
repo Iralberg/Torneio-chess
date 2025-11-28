@@ -1,3 +1,37 @@
+function emparelharJogadores(jogadores) {
+    // Ordena do maior para o menor
+    let lista = [...jogadores].sort((a, b) => b.rating - a.rating);
+
+    let pares = [];
+    let usados = new Set();
+
+    for (let i = 0; i < lista.length; i++) {
+        if (usados.has(i)) continue;
+
+        let melhorIdx = -1;
+        let melhorDiff = Infinity;
+
+        // Procura adversário com menor diferença de rating
+        for (let j = i + 1; j < lista.length; j++) {
+            if (usados.has(j)) continue;
+
+            let diff = Math.abs(lista[i].rating - lista[j].rating);
+
+            if (diff <= 400 && diff < melhorDiff) {
+                melhorDiff = diff;
+                melhorIdx = j;
+            }
+        }
+
+        if (melhorIdx !== -1) {
+            usados.add(i);
+            usados.add(melhorIdx);
+            pares.push([lista[i], lista[melhorIdx]]);
+        }
+    }
+
+    return pares;
+}
 // ---------- DADOS ----------
 let jogadores = [];
 let confrontosManuais = [];
