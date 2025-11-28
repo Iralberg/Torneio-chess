@@ -213,10 +213,10 @@ function iniciarPorRating(){
 
     modo = "rating";
 
-    // 1) Ordenar jogadores por rating
+    // 1) Ordenar jogadores por rating (maior → menor)
     let lista = [...jogadores].sort((a,b)=>b.rating - a.rating);
 
-    // 2) Criar grupos de rating semelhante (diferença <= 200)
+    // 2) Criar grupos de rating semelhante (diferença ≤ 200)
     let grupos = [];
     let atual = [ lista[0] ];
 
@@ -236,11 +236,11 @@ function iniciarPorRating(){
     // 3) Embaralhar cada grupo individualmente
     grupos = grupos.map(g => shuffle(g));
 
-    // 4) Juntar todos os grupos em uma lista final
+    // 4) Juntar todos os grupos na ordem final
     let finais = [];
     grupos.forEach(g => finais.push(...g));
 
-    // 5) Criar pares 1-2, 3-4 (não 1 vs N)
+    // 5) Formar pares: 1-2, 3-4, 5-6...
     winners = [];
     for(let i = 0; i < finais.length; i += 2){
         winners.push({
@@ -251,6 +251,7 @@ function iniciarPorRating(){
 
     iniciarTorneio();
 }
+
 // ---------- INICIAR TORNEIO ----------
 function iniciarTorneio(){
     losers = [];
