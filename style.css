@@ -10,8 +10,11 @@ body {
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 8px;
+            text-align: center;
         }
-
+        h1{
+            text-align: center;
+        }
         button {
             padding: 8px 15px;
             margin: 5px;
