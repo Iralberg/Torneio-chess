@@ -1,0 +1,29 @@
+@charset "UTF-8";
+body {
+            font-family: Arial;
+            background: #f3f3f3;
+            padding: 20px;
+        }
+
+        .box {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        .partida {
+            background: #ececec;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        input{
+            font-size: 17px;
+        }
