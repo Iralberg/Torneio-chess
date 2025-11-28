@@ -24,6 +24,11 @@ body {
             margin: 5px 0;
             border-radius: 5px;
         }
+        #add{
+            font-size: 16px;
+            padding: 2px;
+        }
         input{
             font-size: 17px;
+            width: 170px;
         }
