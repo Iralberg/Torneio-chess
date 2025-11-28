@@ -213,44 +213,78 @@ function iniciarPorRating(){
 
     modo = "rating";
 
-    // 1) Ordenar jogadores por rating (maior → menor)
+    // Ordena do maior pro menor rating
     let lista = [...jogadores].sort((a,b)=>b.rating - a.rating);
 
-    // 2) Criar grupos de rating semelhante (diferença ≤ 200)
-    let grupos = [];
-    let atual = [ lista[0] ];
+    // ---------- EMPARELHAMENTO (400 + fallback) ----------
+    let usados = new Set();
+    let pares = [];
 
-    for(let i = 1; i < lista.length; i++){
-        let anterior = lista[i - 1];
-        let atualJog = lista[i];
+    for (let i = 0; i < lista.length; i++) {
+        if (usados.has(i)) continue;
 
-        if(Math.abs(anterior.rating - atualJog.rating) <= 200){
-            atual.push(atualJog);
-        } else {
-            grupos.push(atual);
-            atual = [atualJog];
+        let melhor = null;
+        let melhorDif = Infinity;
+
+        // 1° tentar encontrar alguém com diferença <= 400
+        for (let j = i + 1; j < lista.length; j++) {
+            if (usados.has(j)) continue;
+
+            let dif = Math.abs(lista[i].rating - lista[j].rating);
+
+            if (dif <= 400 && dif < melhorDif) {
+                melhorDif = dif;
+                melhor = j;
+            }
+        }
+
+        // 2° fallback: pegar o mais próximo possível
+        if (melhor === null) {
+            for (let j = i + 1; j < lista.length; j++) {
+                if (usados.has(j)) continue;
+
+                let dif = Math.abs(lista[i].rating - lista[j].rating);
+
+                if (dif < melhorDif) {
+                    melhorDif = dif;
+                    melhor = j;
+                }
+            }
+        }
+
+        // Criar par
+        if (melhor !== null) {
+            usados.add(i);
+            usados.add(melhor);
+
+            pares.push({
+                p1: lista[i].nome,
+                p2: lista[melhor].nome
+            });
         }
     }
-    grupos.push(atual);
 
-    // 3) Embaralhar cada grupo individualmente
-    grupos = grupos.map(g => shuffle(g));
-
-    // 4) Juntar todos os grupos na ordem final
-    let finais = [];
-    grupos.forEach(g => finais.push(...g));
-
-    // 5) Formar pares: 1-2, 3-4, 5-6...
-    winners = [];
-    for(let i = 0; i < finais.length; i += 2){
-        winners.push({
-            p1: finais[i].nome,
-            p2: finais[i+1] ? finais[i+1].nome : "BYE"
-        });
+    // BYE somente se número for ímpar
+    if (lista.length % 2 === 1) {
+        for (let i = 0; i < lista.length; i++) {
+            if (!usados.has(i)) {
+                pares.push({
+                    p1: lista[i].nome,
+                    p2: "BYE"
+                });
+                break;
+            }
+        }
     }
 
+    winners = pares;
     iniciarTorneio();
 }
+
+
+
+
+
 
 // ---------- INICIAR TORNEIO ----------
 function iniciarTorneio(){
