@@ -13,20 +13,30 @@ button { padding: 8px 15px; margin: 5px; cursor: pointer; }
 </head>
 <body>
 
-<h1>🔵 Torneio Dupla Eliminação</h1>
+<h1>🔵
+ Torneio Dupla Eliminação</h1>
 
 <div class="box">
     <h2>Cadastro</h2>
     <input id="nomeJogador" placeholder="Nome" onkeypress="tecla(event)">
+<input id="ratingJogador" type="number" placeholder="Rating">
+
     <button onclick="addJogador()">Adicionar</button>
     <ul id="listaJogadores"></ul>
 </div>
 
 <div class="box">
     <h2>Gerar Confrontos</h2>
-    <button onclick="gerarAutomatico()">🎲 Sorteio Automático</button>
-    <button onclick="modoManual()">📝 Manual</button>
-    <button onclick="resetarTudo()" style="background:red;color:white;">🗑 Resetar Tudo</button>
+    <button onclick="iniciarPorRating()">
+      ⭐
+  Sorteio  por Rating
+  </button>
+    <button onclick="gerarAutomatico()">🎲
+ Sorteio Automático</button>
+    <button onclick="modoManual()">📝
+ Manual</button>
+    <button onclick="resetarTudo()" style="background:red;color:white;">🗑
+ Resetar Tudo</button>
 </div>
 
 <div class="box" id="manualArea" style="display:none;">

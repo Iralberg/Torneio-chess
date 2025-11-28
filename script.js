@@ -76,12 +76,20 @@ function tecla(e){
 
 function addJogador(){
     let nome = document.getElementById("nomeJogador").value.trim();
-    if(!nome) return;
-    if(jogadores.includes(nome)) return alert("Jogador já existe!");
+    let rating = parseInt(document.getElementById("ratingJogador").value);
 
-    jogadores.push(nome);
+    if(!nome) return alert("Digite o nome!");
+    if(isNaN(rating)) rating = 0;
+
+    if(jogadores.some(j => j.nome === nome))
+        return alert("Jogador já existe!");
+
+    jogadores.push({ nome, rating });
+
     document.getElementById("nomeJogador").value = "";
-    document.getElementById("nomeJogador").focus()
+    document.getElementById("ratingJogador").value = "";
+    document.getElementById("nomeJogador").focus();
+
     renderJogadores();
     atualizarSelects();
     salvar();
@@ -89,7 +97,9 @@ function addJogador(){
 
 function renderJogadores(){
     document.getElementById("listaJogadores").innerHTML =
-        jogadores.map(j => `<li>${j}</li>`).join("");
+        jogadores
+            .map(j => `<li>${j.nome} — Rating: ${j.rating}</li>`)
+            .join("");
 }
 
 function atualizarSelects(){
@@ -97,10 +107,59 @@ function atualizarSelects(){
     let sB = document.getElementById("selB");
     if(!sA || !sB) return;
 
-    sA.innerHTML = jogadores.map(j => `<option>${j}</option>`).join("");
-    sB.innerHTML = jogadores.map(j => `<option>${j}</option>`).join("");
+    sA.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
+    sB.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
+}
+// ---------- RATING / SEEDING ----------
+function shuffle(arr) {
+    for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
+function seedPorRating(jogs, randomizaEmpates = true) {
+    let copia = jogs.map(j => ({ ...j }));
+
+    if(randomizaEmpates){
+        let grupos = {};
+        copia.forEach(j => {
+            if(!grupos[j.rating]) grupos[j.rating] = [];
+            grupos[j.rating].push(j);
+        });
+
+        let notas = Object.keys(grupos).map(r => parseInt(r)).sort((a,b)=>b-a);
+        let resultado = [];
+        notas.forEach(r => {
+            resultado = resultado.concat(shuffle(grupos[r]));
+        });
+        return resultado;
+    }
+
+    return copia.sort((a,b)=>b.rating - a.rating);
+}
+
+function criarParesOrdenados(lista){
+    let vetor = [];
+    let n = lista.length;
+
+    for(let i=0; i<Math.floor(n/2); i++){
+        vetor.push({
+            p1: lista[i].nome,
+            p2: lista[n - 1 - i].nome
+        });
+    }
+
+    if(n % 2 === 1){
+        vetor.push({
+            p1: lista[Math.floor(n/2)].nome,
+            p2: "BYE"
+        });
+    }
+
+    return vetor;
+}
 // ---------- MODO MANUAL ----------
 function modoManual(){
     modo = "manual";
@@ -142,13 +201,56 @@ function gerarAutomatico(){
     winners = [];
     for(let i=0;i<emb.length;i+=2){
         winners.push({
-            p1: emb[i],
-            p2: emb[i+1] ?? "BYE"
+           p1: emb[i].nome,
+p2: emb[i+1] ? emb[i+1].nome : "BYE"
+
         });
     }
     iniciarTorneio();
 }
+function iniciarPorRating(){
+    if(jogadores.length < 2) return alert("Poucos jogadores!");
 
+    modo = "rating";
+
+    // 1) Ordenar jogadores por rating
+    let lista = [...jogadores].sort((a,b)=>b.rating - a.rating);
+
+    // 2) Criar grupos de rating semelhante (diferença <= 200)
+    let grupos = [];
+    let atual = [ lista[0] ];
+
+    for(let i = 1; i < lista.length; i++){
+        let anterior = lista[i - 1];
+        let atualJog = lista[i];
+
+        if(Math.abs(anterior.rating - atualJog.rating) <= 200){
+            atual.push(atualJog);
+        } else {
+            grupos.push(atual);
+            atual = [atualJog];
+        }
+    }
+    grupos.push(atual);
+
+    // 3) Embaralhar cada grupo individualmente
+    grupos = grupos.map(g => shuffle(g));
+
+    // 4) Juntar todos os grupos em uma lista final
+    let finais = [];
+    grupos.forEach(g => finais.push(...g));
+
+    // 5) Criar pares 1-2, 3-4 (não 1 vs N)
+    winners = [];
+    for(let i = 0; i < finais.length; i += 2){
+        winners.push({
+            p1: finais[i].nome,
+            p2: finais[i+1] ? finais[i+1].nome : "BYE"
+        });
+    }
+
+    iniciarTorneio();
+}
 // ---------- INICIAR TORNEIO ----------
 function iniciarTorneio(){
     losers = [];
