@@ -7,15 +7,16 @@ body {
             font-family: Arial;
             background: #f3f3f3;
             padding: 20px;
+            height: 100vh;
         }
-
+       
         .box {
             background: white;
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 8px;
             text-align: center;
-            max-width: 500px;
+            max-width: 700px;
             margin: auto;
             font-size: 22px;
         }
@@ -26,6 +27,7 @@ body {
             padding: 8px 15px;
             margin: 5px;
             cursor: pointer;
+            font-size: 20px;
         }
 
         .partida {
@@ -35,10 +37,10 @@ body {
             border-radius: 5px;
         }
         #add{
-            font-size: 16px;
-            padding: 2px;
+            background-color: rgb(52, 141, 64);
+            border: none;
         }
         input{
-            font-size: 17px;
+            font-size: 20px;
             width: 170px;
         }
