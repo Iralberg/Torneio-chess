@@ -353,15 +353,19 @@ function renderWinners(){
         if(m.p2 === "BYE") b2 = "<i>BYE</i>";
 
         div.innerHTML += `
-            <div class="partida">
+            <div class="partida" id="w_partida_${i}">
                 ${m.p1} vs ${m.p2}<br>
                 ${b1} ${b2}
+                <div class="resultadoW">
+                    ${m.winner ? "<strong>Vencedor: " + m.winner + "</strong>" : ""}
+                </div>
             </div>
         `;
     });
 
     salvar();
 }
+
 
 function vencedorW(i, nome){
     let partida = winners[i];
@@ -371,6 +375,13 @@ function vencedorW(i, nome){
 
     winners[i].winner = nome;
 
+    // EXIBIR TEXTO
+    let caixa = document.getElementById("w_partida_" + i);
+    if(caixa){
+        caixa.querySelector(".resultadoW").innerHTML =
+            `<strong>Vencedor: ${nome}</strong>`;
+    }
+
     if(winners.every(m => m.winner)){
         avancarWinners();
     }
@@ -378,6 +389,7 @@ function vencedorW(i, nome){
     renderWinners();
     salvar();
 }
+
 
 function avancarWinners(){
     let vencedores = winners.map(m => m.winner);
@@ -437,9 +449,12 @@ function renderLosers(){
         if(m.p2 === "BYE") b2 = "<i>BYE</i>";
 
         div.innerHTML += `
-        <div class="partida">
+        <div class="partida" id="l_partida_${i}">
             ${m.p1} vs ${m.p2}<br>
             ${b1} ${b2}
+            <div class="resultadoL">
+                ${m.winner ? "<strong>Vencedor: " + m.winner + "</strong>" : ""}
+            </div>
         </div>`;
     });
 
@@ -449,6 +464,13 @@ function renderLosers(){
 function vencedorL(i, nome){
     losers[i].winner = nome;
 
+    // MOSTRAR TEXTO
+    let caixa = document.getElementById("l_partida_" + i);
+    if(caixa){
+        caixa.querySelector(".resultadoL").innerHTML =
+            `<strong>Vencedor: ${nome}</strong>`;
+    }
+
     if(losers.every(m => m.winner)){
         avancarLosers();
     }
@@ -456,6 +478,7 @@ function vencedorL(i, nome){
     renderLosers();
     salvar();
 }
+
 
 function avancarLosers(){
     let vencedores = losers.map(m => m.winner);
