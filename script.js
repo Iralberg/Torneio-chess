@@ -129,21 +129,35 @@ function addJogador(){
     salvar();
 }
 
-function renderJogadores(){
+
+function renderJogadores() {
     document.getElementById("listaJogadores").innerHTML =
         jogadores
-            .map(j => `<li>${j.nome} — Rating: ${j.rating}</li>`)
+            .map(j => `
+                <li>
+                    ${j.nome} — Rating: ${j.rating}
+                   
+                </li>
+            `)
             .join("");
 }
 
-function atualizarSelects(){
-    let sA = document.getElementById("selA");
-    let sB = document.getElementById("selB");
-    if(!sA || !sB) return;
 
-    sA.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
-    sB.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
+
+function removerJogadorSelect() {
+    let sel = document.getElementById("selDelete");
+    let nome = sel.value;
+
+    if (!nome) return alert("Nenhum jogador selecionado.");
+    if (!confirm(`Remover jogador ${nome}?`)) return;
+
+    jogadores = jogadores.filter(j => j.nome !== nome);
+
+    renderJogadores();
+    atualizarSelects();
+    salvar();
 }
+
 // ---------- RATING / SEEDING ----------
 function shuffle(arr) {
     for(let i = arr.length - 1; i > 0; i--){
@@ -557,3 +571,124 @@ function resetarTudo(){
     document.getElementById("losers").innerHTML = "";
     document.getElementById("final").innerHTML = "";
 }
+// -------------------------------------
+// EXPORTAR PLANILHA (XLSX)
+// -------------------------------------
+function exportarPlanilha() {
+
+    if (jogadores.length === 0) {
+        alert("Nenhum jogador cadastrado!");
+        return;
+    }
+
+    // Cria matriz: cabeçalho + jogadores
+    let dados = [["Nome", "Rating"]];
+    jogadores.forEach(j => dados.push([j.nome, j.rating]));
+
+    // Converte para planilha
+    let ws = XLSX.utils.aoa_to_sheet(dados);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Jogadores");
+
+    // Baixa arquivo
+    XLSX.writeFile(wb, "jogadores.xlsx");
+}
+
+
+
+// -------------------------------------
+// IMPORTAR PLANILHA (XLSX)
+// -------------------------------------
+function importarPlanilha(event) {
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+
+        const primeira = workbook.Sheets[workbook.SheetNames[0]];
+        const linhas = XLSX.utils.sheet_to_json(primeira, {
+            header: 1,
+            blankrows: false
+        });
+
+        // Verifica se há pelo menos 2 linhas (cabeçalho + 1 jogador)
+        if (linhas.length < 2) {
+            alert("Planilha vazia!");
+            return;
+        }
+
+        let novaLista = [];
+
+        for (let i = 1; i < linhas.length; i++) {
+            let l = linhas[i];
+
+            if (!l || l.length === 0) continue;
+
+            // Células podem vir undefined
+            let nome = (l[0] || "").toString().trim();
+            let rating = parseInt(l[1]);
+
+            if (!nome) continue;
+            if (isNaN(rating)) rating = 0;
+
+            novaLista.push({ nome, rating });
+        }
+
+        // Substitui completamente a lista atual
+        jogadores = novaLista;
+
+        // Atualiza interface
+        renderJogadores();
+        atualizarSelects();
+        salvar();
+
+        console.log("Jogadores importados:", jogadores);
+
+        alert("Jogadores importados com sucesso!");
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+
+
+
+// -------------------------------------
+// ATUALIZAR SELECTS (INCLUINDO DELETAR)
+// -------------------------------------
+function atualizarSelects() {
+    let sA = document.getElementById("selA");
+    let sB = document.getElementById("selB");
+    let sD = document.getElementById("selDelete");
+
+    if (sA) sA.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
+    if (sB) sB.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
+    if (sD) sD.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
+}
+
+
+
+// -------------------------------------
+// REMOVER JOGADOR PELO SELECT
+// -------------------------------------
+function removerJogadorSelect() {
+    let nome = document.getElementById("selDelete").value;
+
+    if (!nome) return;
+
+    jogadores = jogadores.filter(j => j.nome !== nome);
+
+    renderJogadores();
+    atualizarSelects();
+    salvar();
+
+    alert("Jogador removido: " + nome);
+}
+
+
+
