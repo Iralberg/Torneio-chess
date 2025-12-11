@@ -40,6 +40,7 @@ let confrontosManuais = [];
 let winners = [];
 let losers = [];
 
+let losersQueue = [];   // aqui entram o
 let finalistaW = null;
 let finalistaL = null;
 
@@ -379,32 +380,6 @@ function renderWinners(){
 
     salvar();
 }
-
-
-function vencedorW(i, nome){
-    let partida = winners[i];
-    let perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
-
-    if(perdedor !== "BYE") losers.push(perdedor);
-
-    winners[i].winner = nome;
-
-    // EXIBIR TEXTO
-    let caixa = document.getElementById("w_partida_" + i);
-    if(caixa){
-        caixa.querySelector(".resultadoW").innerHTML =
-            `<strong>Vencedor: ${nome}</strong>`;
-    }
-
-    if(winners.every(m => m.winner)){
-        avancarWinners();
-    }
-
-    renderWinners();
-    salvar();
-}
-
-
 function avancarWinners(){
     let vencedores = winners.map(m => m.winner);
 
@@ -423,10 +398,39 @@ function avancarWinners(){
         });
     }
 }
+// ---------- LOSERS (CORRIGIDO) ----------
 
-// ---------- LOSERS ----------
-function iniciarLosers(){
-    if(losers.length === 0){
+// Entra perdedor na fila sem duplicar
+function vencedorW(i, nome){
+    let partida = winners[i];
+    let perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
+
+    if (perdedor !== "BYE" && !losersQueue.includes(perdedor)) {
+        losersQueue.push(perdedor);
+    }
+
+    winners[i].winner = nome;
+
+    let caixa = document.getElementById("w_partida_" + i);
+    if(caixa){
+        caixa.querySelector(".resultadoW").innerHTML =
+            `<strong>Vencedor: ${nome}</strong>`;
+    }
+
+    if(winners.every(m => m.winner)){
+        avancarWinners();
+    }
+
+    renderWinners();
+    salvar();
+}
+
+
+// Monta primeira rodada ou próximas rodadas
+function iniciarLosers() {
+
+    if (losersQueue.length === 0) {
+        losers = [];
         finalistaL = null;
         montarFinal();
         salvar();
@@ -434,37 +438,54 @@ function iniciarLosers(){
     }
 
     let pares = [];
-    for(let i=0;i<losers.length;i+=2){
+
+    for (let i = 0; i < losersQueue.length; i += 2) {
         pares.push({
-            p1: losers[i],
-            p2: losers[i+1] ?? "BYE"
+            p1: losersQueue[i],
+            p2: losersQueue[i + 1] ?? "BYE",
+            winner: null
         });
     }
 
     losers = pares;
+
+    // Esvazia fila para só entrar perdedores novos
+    losersQueue = [];
+
     renderLosers();
     salvar();
 }
 
-function renderLosers(){
+
+// Render dos losers corrigido para evitar objetos inválidos
+function renderLosers() {
     let div = document.getElementById("losers");
 
-    if(losers.length === 0){
+    if (!losers || losers.length === 0) {
         div.innerHTML = "<p>Aguardando finalista.</p>";
         salvar();
         return;
     }
 
     div.innerHTML = "";
-    losers.forEach((m,i)=>{
-        let b1 = `<button onclick="vencedorL(${i}, '${m.p1}')">${m.p1}</button>`;
-        let b2 = `<button onclick="vencedorL(${i}, '${m.p2}')">${m.p2}</button>`;
 
-        if(m.p2 === "BYE") b2 = "<i>BYE</i>";
+    losers.forEach((m, i) => {
+        // Se algum objeto voltar quebrado do localStorage, normaliza:
+        if (!m || typeof m !== "object") {
+            return;
+        }
+
+        let p1 = m.p1;
+        let p2 = m.p2;
+
+        let b1 = `<button onclick="vencedorL(${i}, '${p1}')">${p1}</button>`;
+        let b2 = `<button onclick="vencedorL(${i}, '${p2}')">${p2}</button>`;
+
+        if (p2 === "BYE") b2 = "<i>BYE</i>";
 
         div.innerHTML += `
         <div class="partida" id="l_partida_${i}">
-            ${m.p1} vs ${m.p2}<br>
+            ${p1} vs ${p2}<br>
             ${b1} ${b2}
             <div class="resultadoL">
                 ${m.winner ? "<strong>Vencedor: " + m.winner + "</strong>" : ""}
@@ -475,17 +496,18 @@ function renderLosers(){
     salvar();
 }
 
+
+// Processa vencedor dos losers e avança rodada
 function vencedorL(i, nome){
     losers[i].winner = nome;
 
-    // MOSTRAR TEXTO
     let caixa = document.getElementById("l_partida_" + i);
-    if(caixa){
+    if (caixa) {
         caixa.querySelector(".resultadoL").innerHTML =
             `<strong>Vencedor: ${nome}</strong>`;
     }
 
-    if(losers.every(m => m.winner)){
+    if (losers.every(m => m.winner)) {
         avancarLosers();
     }
 
@@ -494,24 +516,50 @@ function vencedorL(i, nome){
 }
 
 
-function avancarLosers(){
-    let vencedores = losers.map(m => m.winner);
+// Avança rodada do losers
+function avancarLosers() {
 
-    if(vencedores.length === 1){
+    let vencedores = [];
+    let novosPerdedores = [];
+
+    losers.forEach(m => {
+        vencedores.push(m.winner);
+
+        // pega perdedor e manda para fila
+        let perdedor = (m.p1 === m.winner) ? m.p2 : m.p1;
+        if (perdedor !== "BYE") novosPerdedores.push(perdedor);
+    });
+
+    // insere perdedores na fila da próxima rodada (sem duplicar)
+    novosPerdedores.forEach(p => {
+        if (!losersQueue.includes(p)) {
+            losersQueue.push(p);
+        }
+    });
+
+    // quando sobra só 1 vencedor → finalista
+    if (vencedores.length === 1) {
         finalistaL = vencedores[0];
         montarFinal();
         salvar();
         return;
     }
 
-    losers = [];
-    for(let i=0;i<vencedores.length;i+=2){
-        losers.push({
+    // cria nova rodada
+    let pares = [];
+    for (let i = 0; i < vencedores.length; i += 2) {
+        pares.push({
             p1: vencedores[i],
-            p2: vencedores[i+1] ?? "BYE"
+            p2: vencedores[i + 1] ?? "BYE",
+            winner: null
         });
     }
+
+    losers = pares;
+    renderLosers();
+    salvar();
 }
+// ---------- LOSERS ------
 
 // ---------- GRANDE FINAL ----------
 function montarFinal(){
