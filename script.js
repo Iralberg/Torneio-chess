@@ -35,10 +35,11 @@ function emparelharJogadores(jogadores) {
 // ---------- DADOS ----------
 let jogadores = [];
 let confrontosManuais = [];
-let containerLosers=document.getElementById('popupLosersConteudo')
+let containerLosers = document.getElementById('popupLosersConteudo')
 // brackets
 let winners = [];
 let losers = [];
+let losersSeeded = false;
 
 let losersHistorico = [];
 let losersQueue = [];   // aqui entram o
@@ -72,8 +73,8 @@ function salvar() {
 // ---------- CARREGAR AO INICIAR ----------
 window.onload = function () {
     if (localStorage.getItem("losersQueue")) {
-    losersQueue = JSON.parse(localStorage.getItem("losersQueue"));
-}
+        losersQueue = JSON.parse(localStorage.getItem("losersQueue"));
+    }
 
     if (localStorage.getItem("losersHistorico")) {
         losersHistorico = JSON.parse(localStorage.getItem("losersHistorico"));
@@ -268,8 +269,8 @@ function gerarAutomatico() {
 
         });
     }
-    let poupLoser=document.getElementById('popupLosersConteudo')
-    poupLoser.innerHTML=''
+    let poupLoser = document.getElementById('popupLosersConteudo')
+    poupLoser.innerHTML = ''
     iniciarTorneio();
 }
 function iniciarPorRating() {
@@ -355,6 +356,8 @@ function iniciarTorneio() {
     losers = [];
     finalistaL = null;
     finalistaW = null;
+    losersSeeded = false;
+
     resetMatch = false;
     confrontosManuais = [];
 
@@ -446,24 +449,28 @@ function woL(i) {
 
 
 // ---------- LOSERS (CORRIGIDO) ----------
+function getRating(nome) {
+    const j = jogadores.find(j => j.nome === nome);
+    return j ? j.rating : 0;
+}
 
 // Entra perdedor na fila sem duplicar
 function vencedorW(i, nome) {
     let partida = winners[i];
     let perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
-  if (!winners[i] || winners[i].winner) return;
- if (perdedor !== "BYE") {
+    if (!winners[i] || winners[i].winner) return;
+    if (perdedor !== "BYE") {
 
-    // fila do losers
-    if (!losersQueue.includes(perdedor)) {
-        losersQueue.push(perdedor);
-    }
+        // fila do losers
+        if (!losersQueue.includes(perdedor)) {
+            losersQueue.push(perdedor);
+        }
 
-    // histórico permanente (apenas winners)
-    if (!losersHistorico.includes(perdedor)) {
-        losersHistorico.push(perdedor);
+        // histórico permanente (apenas winners)
+        if (!losersHistorico.includes(perdedor)) {
+            losersHistorico.push(perdedor);
+        }
     }
-}
 
 
 
@@ -515,11 +522,11 @@ function renderWinners() {
         status.className = "status";
 
         if (partida.winner === WO) {
-            status.textContent = "WO";
+            status.innerHTML = "WO";
         } else if (partida.winner) {
-            status.textContent = `Vencedor: ${partida.winner}`;
+            status.innerHTML = `<div class='match'>Vencedor: ${partida.winner}</div>`;
         } else {
-            status.textContent = "Aguardando";
+            status.innerHTML = "Aguardando";
         }
 
         div.append(p1, p2, wo, status);
@@ -529,8 +536,9 @@ function renderWinners() {
 
 
 // Monta primeira rodada ou próximas rodadas
-function iniciarLosers() {
+// ---------- INICIAR LOSERS ----------
 
+function iniciarLosers() {
     if (losersQueue.length === 0) {
         losers = [];
         finalistaL = null;
@@ -539,24 +547,47 @@ function iniciarLosers() {
         return;
     }
 
-    let pares = [];
+    // Mostra opções para o usuário escolher como gerar os pares
+    const container = document.getElementById("opcoesLosers");
+    container.innerHTML = `
+        <label for="modoLosers">Escolha o pareamento dos losers:</label>
+        <select id="modoLosers">
+            <option value="aleatorio">Aleatório</option>
+            <option value="rating">Por Rating</option>
+        </select>
+        <button onclick="gerarLosers()">Gerar pares</button>
+    `;
+}
 
-    for (let i = 0; i < losersQueue.length; i += 2) {
-        pares.push({
-            p1: losersQueue[i],
-            p2: losersQueue[i + 1] ?? "BYE",
+// ---------- GERAR PARES DE LOSERS ----------
+
+function gerarLosers() {
+    const modo = document.getElementById("modoLosers").value;
+    let lista = [...losersQueue];
+    losersQueue = [];  // limpa fila para não duplicar
+    losersSeeded = true;
+
+    if (modo === "aleatorio") {
+        lista = shuffle(lista);
+    } else if (modo === "rating") {
+        lista.sort((a, b) => getRating(b) - getRating(a));
+    }
+
+    // Gera os pares
+    losers = [];
+    for (let i = 0; i < lista.length; i += 2) {
+        losers.push({
+            p1: lista[i],
+            p2: lista[i + 1] ?? "BYE",
             winner: null
         });
     }
 
-    losers = pares;
-
-    // Esvazia fila para só entrar perdedores novos
-    losersQueue = [];
-
     renderLosers();
+    document.getElementById("opcoesLosers").innerHTML = ""; // remove seleção
     salvar();
 }
+
 
 
 // Render dos losers corrigido para evitar objetos inválidos
@@ -580,29 +611,30 @@ function renderLosers() {
         let p1 = m.p1;
         let p2 = m.p2;
 
-      let b1 = `<button ${m.winner ? "disabled" : ""} onclick="vencedorL(${i}, '${p1}')">${p1}</button>`;
-let b2 = p2 === "BYE"
-    ? "<i>BYE</i>"
-    : `<button ${m.winner ? "disabled" : ""} onclick="vencedorL(${i}, '${p2}')">${p2}</button>`;
+        let b1 = `<button ${m.winner ? "disabled" : ""} onclick="vencedorL(${i}, '${p1}')">${p1}</button>`;
+        let b2 = p2 === "BYE"
+            ? "<i>BYE</i>"
+            : `<button ${m.winner ? "disabled" : ""} onclick="vencedorL(${i}, '${p2}')">${p2}</button>`;
 
-let wo = `<button ${m.winner ? "disabled" : ""} onclick="woL(${i})">WO</button>`;
+        let wo = `<button ${m.winner ? "disabled" : ""} onclick="woL(${i})">WO</button>`;
 
 
         if (p2 === "BYE") b2 = "<i>BYE</i>";
 
         div.innerHTML += `
         <div class="partida" id="l_partida_${i}">
-            ${p1} vs ${p2}<br>
+           
             ${b1} ${b2} ${wo}
+            <br>
             <div class="resultadoL">
-    ${
-        m.winner === WO
-            ? "<strong>WO — ambos eliminados</strong>"
-            : m.winner
-                ? "<strong>Vencedor: " + m.winner + "</strong>"
-                : ""
-    }
-</div>
+            <br>
+    ${m.winner === WO
+                ? "<strong>WO — ambos eliminados</strong>"
+                : m.winner
+                    ? "<strong>Vencedor: " + m.winner + "</strong>"
+                    : ""
+            }
+             </div>
 
         </div>`;
     });
@@ -710,13 +742,13 @@ function finalVencedor(g, p) {
     div.innerHTML = `<h2>🏆 CAMPEÃO: ${g}</h2><h3>Vice: ${p}</h3>`;
     salvar();
 }
-function abrirPopupLosers(){
-    const popLoser=document.getElementById('popupLosers')
+function abrirPopupLosers() {
+    const popLoser = document.getElementById('popupLosers')
     popLoser.classList.toggle('popup')
     mostrarLosers()
 }
 function mostrarLosers() {
-   
+
     // proteção extra
     if (!containerLosers) return;
 
@@ -735,7 +767,7 @@ function mostrarLosers() {
         containerLosers.appendChild(p);
     });
 }
-function resetarLosers(){
+function resetarLosers() {
     losersHistorico = [];
     containerLosers.replaceChildren();
     salvar();

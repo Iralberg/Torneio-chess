@@ -6,6 +6,7 @@
     <link rel="shortcut icon" href="download.jfif" type="image/x-icon">
     <title>Torneio Dupla Eliminação</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
    
@@ -39,6 +40,11 @@
     <button onclick="exportarPlanilha()">Expotar planilha</button>
      
 </div>
+<div class="box">
+    <h1 >Agendamento</h1>
+   <button><a class="link" target="_blank" href="pag/pag1.html">Agendar partidas</a></button>
+     
+</div>
     <div class="box">
         <h2>Gerar Confrontos</h2>
         <button onclick="iniciarPorRating()">
@@ -70,6 +76,11 @@
 
     <div class="box">
         <h2>Losers Bracket</h2>
+        <label for="modoLosers">Gerar losers:</label>
+<div id="opcoesLosers"></div>
+<div id="losers"></div>
+
+
         <div id="losers"></div>
     </div>
 
@@ -79,7 +90,7 @@
     </div>
  </main>
  <!-- BOTÃO PARA ABRIR -->
-<button onclick="abrirPopupLosers()">Ver jogadores no Losers</button>
+<button id="btn-lose" onclick="abrirPopupLosers()">Ver jogadores no Losers</button>
 
 <!-- POPUP / MODAL -->
 <div id="popupLosers" class="popup">

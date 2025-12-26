@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Agendamento de Partidas</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <div class="form">
+        <h3>Cadastro Manual</h3>
+        <input id="nome" placeholder="Nome">
+        <input id="rating" type="number" placeholder="Rating">
+        <button onclick="cadastrarManual()">Cadastrar</button>
+    </div>
+
+    <hr>
+
+    <div class="form">
+        <h3>Importar Planilha</h3>
+        <input type="file" accept=".xlsx" onchange="importarPlanilha(event)">
+    </div>
+
+    <h2>Lista de Jogadores</h2>
+    <button class="deletar" onclick="resetarJogadores()">Resetar Jogadores</button>
+
+    <div class="listJog">
+        <ul id="lista"></ul>
+    </div>
+
+    <h1>Agendar Partida</h1>
+
+
+
+    <div class="agenda">
+        <label>Jogador Branco</label>
+        <select id="jogadorBranco"></select>
+        <br><br>
+        <label>Jogador Preto</label>
+        <select id="jogadorPreto"></select>
+        <br><br>
+        <label>Data</label>
+        <input type="date" id="data">
+        <br><br>
+        <label>Hora</label>
+        <input type="time" id="hora"><br>
+        <label>Nome da Partida</label>
+        <input type="text" id="nomePartida" placeholder="Ex: Final Campeonato">
+        <br><br>
+        <button onclick="agendarPartida()">Agendar</button>
+    </div>
+
+    <h2>Partidas Agendadas</h2>
+    <div id="listaPartidas"></div>
+
+
+
+    <script src="script.js"></script>
+</body>
+
+</html>
