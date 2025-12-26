@@ -13,6 +13,7 @@
 
 <body>
 
+    
     <h1>🔵
         Torneio Dupla Eliminação</h1>
  <main>
@@ -77,6 +78,19 @@
         <div id="final"></div>
     </div>
  </main>
+ <!-- BOTÃO PARA ABRIR -->
+<button onclick="abrirPopupLosers()">Ver jogadores no Losers</button>
+
+<!-- POPUP / MODAL -->
+<div id="popupLosers" class="popup">
+    <div class="popup-conteudo">
+        <h3>Jogadores que caíram do Winners</h3>
+
+        <div id="popupLosersConteudo"></div>
+        <button onclick="resetarLosers()">Resetar Lista</button>
+        <button onclick="abrirPopupLosers()">Fechar</button>
+    </div>
+</div>
     <script src="script.js"></script>
 </body>
 

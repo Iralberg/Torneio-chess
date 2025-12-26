@@ -35,11 +35,12 @@ function emparelharJogadores(jogadores) {
 // ---------- DADOS ----------
 let jogadores = [];
 let confrontosManuais = [];
-
+let containerLosers=document.getElementById('popupLosersConteudo')
 // brackets
 let winners = [];
 let losers = [];
 
+let losersHistorico = [];
 let losersQueue = [];   // aqui entram o
 let finalistaW = null;
 let finalistaL = null;
@@ -49,6 +50,10 @@ let modo = "";
 
 // ---------- SALVAR ----------
 function salvar() {
+    localStorage.setItem("losersQueue", JSON.stringify(losersQueue));
+
+    localStorage.setItem("losersHistorico", JSON.stringify(losersHistorico));
+
     localStorage.setItem("jogadores", JSON.stringify(jogadores));
     localStorage.setItem("confrontosManuais", JSON.stringify(confrontosManuais));
     localStorage.setItem("winnersData", JSON.stringify(winners));
@@ -66,6 +71,14 @@ function salvar() {
 
 // ---------- CARREGAR AO INICIAR ----------
 window.onload = function () {
+    if (localStorage.getItem("losersQueue")) {
+    losersQueue = JSON.parse(localStorage.getItem("losersQueue"));
+}
+
+    if (localStorage.getItem("losersHistorico")) {
+        losersHistorico = JSON.parse(localStorage.getItem("losersHistorico"));
+    }
+
     if (localStorage.getItem("jogadores")) {
         jogadores = JSON.parse(localStorage.getItem("jogadores"));
     }
@@ -103,20 +116,20 @@ window.onload = function () {
 };
 
 // ---------- CADASTRO ----------
-function tecla(e){
-  if(e.key === "Enter"){
-    addJogador(); // dispara o botão
-  }
+function tecla(e) {
+    if (e.key === "Enter") {
+        addJogador(); // dispara o botão
+    }
 }
 
-function addJogador(){
+function addJogador() {
     let nome = document.getElementById("nomeJogador").value.trim();
     let rating = parseInt(document.getElementById("ratingJogador").value);
 
-    if(!nome) return alert("Digite o nome!");
-    if(isNaN(rating)) rating = 0;
+    if (!nome) return alert("Digite o nome!");
+    if (isNaN(rating)) rating = 0;
 
-    if(jogadores.some(j => j.nome === nome))
+    if (jogadores.some(j => j.nome === nome))
         return alert("Jogador já existe!");
 
     jogadores.push({ nome, rating });
@@ -161,7 +174,7 @@ function removerJogadorSelect() {
 
 // ---------- RATING / SEEDING ----------
 function shuffle(arr) {
-    for(let i = arr.length - 1; i > 0; i--){
+    for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
@@ -171,14 +184,14 @@ function shuffle(arr) {
 function seedPorRating(jogs, randomizaEmpates = true) {
     let copia = jogs.map(j => ({ ...j }));
 
-    if(randomizaEmpates){
+    if (randomizaEmpates) {
         let grupos = {};
         copia.forEach(j => {
-            if(!grupos[j.rating]) grupos[j.rating] = [];
+            if (!grupos[j.rating]) grupos[j.rating] = [];
             grupos[j.rating].push(j);
         });
 
-        let notas = Object.keys(grupos).map(r => parseInt(r)).sort((a,b)=>b-a);
+        let notas = Object.keys(grupos).map(r => parseInt(r)).sort((a, b) => b - a);
         let resultado = [];
         notas.forEach(r => {
             resultado = resultado.concat(shuffle(grupos[r]));
@@ -186,23 +199,23 @@ function seedPorRating(jogs, randomizaEmpates = true) {
         return resultado;
     }
 
-    return copia.sort((a,b)=>b.rating - a.rating);
+    return copia.sort((a, b) => b.rating - a.rating);
 }
 
-function criarParesOrdenados(lista){
+function criarParesOrdenados(lista) {
     let vetor = [];
     let n = lista.length;
 
-    for(let i=0; i<Math.floor(n/2); i++){
+    for (let i = 0; i < Math.floor(n / 2); i++) {
         vetor.push({
             p1: lista[i].nome,
             p2: lista[n - 1 - i].nome
         });
     }
 
-    if(n % 2 === 1){
+    if (n % 2 === 1) {
         vetor.push({
-            p1: lista[Math.floor(n/2)].nome,
+            p1: lista[Math.floor(n / 2)].nome,
             p2: "BYE"
         });
     }
@@ -210,60 +223,62 @@ function criarParesOrdenados(lista){
     return vetor;
 }
 // ---------- MODO MANUAL ----------
-function modoManual(){
+function modoManual() {
     modo = "manual";
     document.getElementById("manualArea").style.display = "block";
     atualizarSelects();
     salvar();
 }
 
-function addManual(){
+function addManual() {
     let A = document.getElementById("selA").value;
     let B = document.getElementById("selB").value;
 
-    if(A === B) return alert("Jogadores iguais!");
+    if (A === B) return alert("Jogadores iguais!");
 
-    confrontosManuais.push({p1:A,p2:B});
+    confrontosManuais.push({ p1: A, p2: B });
     renderManuais();
     salvar();
 }
 
-function renderManuais(){
+function renderManuais() {
     document.getElementById("listaManuais").innerHTML =
         confrontosManuais.map(c => `<li>${c.p1} vs ${c.p2}</li>`).join("");
 }
 
-function iniciarManual(){
-    if(confrontosManuais.length === 0) return alert("Sem confrontos!");
-    winners = confrontosManuais.map(c => ({...c}));
+function iniciarManual() {
+    if (confrontosManuais.length === 0) return alert("Sem confrontos!");
+    winners = confrontosManuais.map(c => ({ ...c }));
     iniciarTorneio();
 }
 
 // ---------- SORTEIO ----------
-function gerarAutomatico(){
+function gerarAutomatico() {
     modo = "sorteio";
 
-    if(jogadores.length < 2) return alert("Poucos jogadores!");
+    if (jogadores.length < 2) return alert("Poucos jogadores!");
 
-    let emb = [...jogadores].sort(()=>Math.random()-0.5);
+    let emb = [...jogadores].sort(() => Math.random() - 0.5);
 
     winners = [];
-    for(let i=0;i<emb.length;i+=2){
+    for (let i = 0; i < emb.length; i += 2) {
         winners.push({
-           p1: emb[i].nome,
-p2: emb[i+1] ? emb[i+1].nome : "BYE"
+            p1: emb[i].nome,
+            p2: emb[i + 1] ? emb[i + 1].nome : "BYE"
 
         });
     }
+    let poupLoser=document.getElementById('popupLosersConteudo')
+    poupLoser.innerHTML=''
     iniciarTorneio();
 }
-function iniciarPorRating(){
-    if(jogadores.length < 2) return alert("Poucos jogadores!");
+function iniciarPorRating() {
+    if (jogadores.length < 2) return alert("Poucos jogadores!");
 
     modo = "rating";
 
     // Ordena do maior pro menor rating
-    let lista = [...jogadores].sort((a,b)=>b.rating - a.rating);
+    let lista = [...jogadores].sort((a, b) => b.rating - a.rating);
 
     // ---------- EMPARELHAMENTO (400 + fallback) ----------
     let usados = new Set();
@@ -336,7 +351,7 @@ function iniciarPorRating(){
 
 
 // ---------- INICIAR TORNEIO ----------
-function iniciarTorneio(){
+function iniciarTorneio() {
     losers = [];
     finalistaL = null;
     finalistaW = null;
@@ -351,78 +366,165 @@ function iniciarTorneio(){
 }
 
 // ---------- WINNERS ----------
-function renderWinners(){
-    let div = document.getElementById("winners");
-    if(winners.length === 0){
-        div.innerHTML = "<p>Nenhuma partida.</p>";
-        salvar();
+const WO = "__WO__";
+
+function avancarWinners() {
+
+    const vencedores = winners
+        .filter(m => m.winner && m.winner !== WO)
+        .map(m => m.winner);
+
+    if (vencedores.length === 0) {
+        // todos WO → ninguém avança
+        finalistaW = null;
+        iniciarLosers();
         return;
     }
 
-    div.innerHTML = "";
-
-    winners.forEach((m,i)=>{
-        let b1 = `<button onclick="vencedorW(${i}, '${m.p1}')">${m.p1}</button>`;
-        let b2 = `<button onclick="vencedorW(${i}, '${m.p2}')">${m.p2}</button>`;
-
-        if(m.p2 === "BYE") b2 = "<i>BYE</i>";
-
-        div.innerHTML += `
-            <div class="partida" id="w_partida_${i}">
-                ${m.p1} vs ${m.p2}<br>
-                ${b1} ${b2}
-                <div class="resultadoW">
-                    ${m.winner ? "<strong>Vencedor: " + m.winner + "</strong>" : ""}
-                </div>
-            </div>
-        `;
-    });
-
-    salvar();
-}
-function avancarWinners(){
-    let vencedores = winners.map(m => m.winner);
-
-    if(vencedores.length === 1){
+    if (vencedores.length === 1) {
         finalistaW = vencedores[0];
         iniciarLosers();
         return;
     }
 
-    winners = [];
+    const novaRodada = [];
 
-    for(let i=0;i<vencedores.length;i+=2){
-        winners.push({
+    for (let i = 0; i < vencedores.length; i += 2) {
+        novaRodada.push({
             p1: vencedores[i],
-            p2: vencedores[i+1] ?? "BYE"
+            p2: vencedores[i + 1] ?? "BYE",
+            winner: null
         });
     }
+
+    winners = novaRodada;
 }
-// ---------- LOSERS (CORRIGIDO) ----------
 
-// Entra perdedor na fila sem duplicar
-function vencedorW(i, nome){
-    let partida = winners[i];
-    let perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
 
-    if (perdedor !== "BYE" && !losersQueue.includes(perdedor)) {
-        losersQueue.push(perdedor);
-    }
 
-    winners[i].winner = nome;
+//WO
+function woW(i) {
+    const partida = winners[i];
 
-    let caixa = document.getElementById("w_partida_" + i);
-    if(caixa){
-        caixa.querySelector(".resultadoW").innerHTML =
-            `<strong>Vencedor: ${nome}</strong>`;
-    }
+    if (!partida || partida.winner !== null) return;
 
-    if(winners.every(m => m.winner)){
+    // envia os dois jogadores para o losers
+    [partida.p1, partida.p2].forEach(j => {
+        if (j && j !== "BYE") {
+            if (!losersQueue.includes(j)) losersQueue.push(j);
+            if (!losersHistorico.includes(j)) losersHistorico.push(j);
+        }
+    });
+
+    // marca corretamente como WO
+    partida.winner = WO;
+
+    if (winners.every(m => m.winner !== null)) {
         avancarWinners();
     }
 
     renderWinners();
     salvar();
+}
+function woL(i) {
+    const partida = losers[i];
+
+    if (!partida || partida.winner !== null) return;
+
+    // ambos eliminados definitivamente
+    partida.winner = WO;
+
+    // se todas partidas encerraram, avança
+    if (losers.every(m => m.winner !== null)) {
+        avancarLosers();
+    }
+
+    renderLosers();
+    salvar();
+}
+
+
+
+// ---------- LOSERS (CORRIGIDO) ----------
+
+// Entra perdedor na fila sem duplicar
+function vencedorW(i, nome) {
+    let partida = winners[i];
+    let perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
+  if (!winners[i] || winners[i].winner) return;
+ if (perdedor !== "BYE") {
+
+    // fila do losers
+    if (!losersQueue.includes(perdedor)) {
+        losersQueue.push(perdedor);
+    }
+
+    // histórico permanente (apenas winners)
+    if (!losersHistorico.includes(perdedor)) {
+        losersHistorico.push(perdedor);
+    }
+}
+
+
+
+    winners[i].winner = nome;
+
+    let caixa = document.getElementById("w_partida_" + i);
+    if (caixa) {
+        caixa.querySelector(".resultadoW").innerHTML =
+            `<strong>Vencedor: ${nome}</strong>`;
+    }
+
+    if (winners.every(m => m.winner)) {
+        avancarWinners();
+    }
+
+    renderWinners();
+    salvar();
+}
+function renderWinners() {
+    const container = document.getElementById("winners");
+    container.innerHTML = "";
+
+    winners.forEach((partida, index) => {
+
+        // GARANTIA DE ESTADO (crítico)
+        if (partida.winner === undefined) {
+            partida.winner = null;
+        }
+
+        const div = document.createElement("div");
+        div.className = "match";
+
+        const p1 = document.createElement("button");
+        p1.textContent = partida.p1;
+        p1.disabled = partida.winner !== null || partida.p1 === "BYE";
+        p1.onclick = () => vencedorW(index, partida.p1);
+
+        const p2 = document.createElement("button");
+        p2.textContent = partida.p2;
+        p2.disabled = partida.winner !== null || partida.p2 === "BYE";
+        p2.onclick = () => vencedorW(index, partida.p2);
+
+        const wo = document.createElement("button");
+        wo.textContent = "WO";
+        wo.disabled = partida.winner !== null;
+        wo.onclick = () => woW(index);
+
+        const status = document.createElement("span");
+        status.className = "status";
+
+        if (partida.winner === WO) {
+            status.textContent = "WO";
+        } else if (partida.winner) {
+            status.textContent = `Vencedor: ${partida.winner}`;
+        } else {
+            status.textContent = "Aguardando";
+        }
+
+        div.append(p1, p2, wo, status);
+        container.appendChild(div);
+    });
 }
 
 
@@ -478,18 +580,30 @@ function renderLosers() {
         let p1 = m.p1;
         let p2 = m.p2;
 
-        let b1 = `<button onclick="vencedorL(${i}, '${p1}')">${p1}</button>`;
-        let b2 = `<button onclick="vencedorL(${i}, '${p2}')">${p2}</button>`;
+      let b1 = `<button ${m.winner ? "disabled" : ""} onclick="vencedorL(${i}, '${p1}')">${p1}</button>`;
+let b2 = p2 === "BYE"
+    ? "<i>BYE</i>"
+    : `<button ${m.winner ? "disabled" : ""} onclick="vencedorL(${i}, '${p2}')">${p2}</button>`;
+
+let wo = `<button ${m.winner ? "disabled" : ""} onclick="woL(${i})">WO</button>`;
+
 
         if (p2 === "BYE") b2 = "<i>BYE</i>";
 
         div.innerHTML += `
         <div class="partida" id="l_partida_${i}">
             ${p1} vs ${p2}<br>
-            ${b1} ${b2}
+            ${b1} ${b2} ${wo}
             <div class="resultadoL">
-                ${m.winner ? "<strong>Vencedor: " + m.winner + "</strong>" : ""}
-            </div>
+    ${
+        m.winner === WO
+            ? "<strong>WO — ambos eliminados</strong>"
+            : m.winner
+                ? "<strong>Vencedor: " + m.winner + "</strong>"
+                : ""
+    }
+</div>
+
         </div>`;
     });
 
@@ -497,17 +611,14 @@ function renderLosers() {
 }
 
 
+
 // Processa vencedor dos losers e avança rodada
-function vencedorL(i, nome){
+function vencedorL(i, nome) {
+    if (!losers[i] || losers[i].winner !== null) return;
+
     losers[i].winner = nome;
 
-    let caixa = document.getElementById("l_partida_" + i);
-    if (caixa) {
-        caixa.querySelector(".resultadoL").innerHTML =
-            `<strong>Vencedor: ${nome}</strong>`;
-    }
-
-    if (losers.every(m => m.winner)) {
+    if (losers.every(m => m.winner !== null)) {
         avancarLosers();
     }
 
@@ -516,28 +627,28 @@ function vencedorL(i, nome){
 }
 
 
+
 // Avança rodada do losers
 function avancarLosers() {
 
-    let vencedores = [];
-    let novosPerdedores = [];
+    const vencedores = [];
 
     losers.forEach(m => {
-        vencedores.push(m.winner);
-
-        // pega perdedor e manda para fila
-        let perdedor = (m.p1 === m.winner) ? m.p2 : m.p1;
-        if (perdedor !== "BYE") novosPerdedores.push(perdedor);
-    });
-
-    // insere perdedores na fila da próxima rodada (sem duplicar)
-    novosPerdedores.forEach(p => {
-        if (!losersQueue.includes(p)) {
-            losersQueue.push(p);
+        // ignora WO
+        if (m.winner && m.winner !== WO) {
+            vencedores.push(m.winner);
         }
     });
 
-    // quando sobra só 1 vencedor → finalista
+    // ninguém sobrou
+    if (vencedores.length === 0) {
+        finalistaL = null;
+        montarFinal();
+        salvar();
+        return;
+    }
+
+    // só um → finalista dos losers
     if (vencedores.length === 1) {
         finalistaL = vencedores[0];
         montarFinal();
@@ -545,8 +656,8 @@ function avancarLosers() {
         return;
     }
 
-    // cria nova rodada
-    let pares = [];
+    // monta nova rodada
+    const pares = [];
     for (let i = 0; i < vencedores.length; i += 2) {
         pares.push({
             p1: vencedores[i],
@@ -559,14 +670,15 @@ function avancarLosers() {
     renderLosers();
     salvar();
 }
+
 // ---------- LOSERS ------
 
 // ---------- GRANDE FINAL ----------
-function montarFinal(){
+function montarFinal() {
     let div = document.getElementById("final");
 
-    if(!finalistaW) return;
-    if(finalistaL === null){
+    if (!finalistaW) return;
+    if (finalistaL === null) {
         div.innerHTML = `<h3>Campeão: ${finalistaW}</h3>`;
         salvar();
         return;
@@ -581,10 +693,10 @@ function montarFinal(){
     salvar();
 }
 
-function finalVencedor(g, p){
+function finalVencedor(g, p) {
     let div = document.getElementById("final");
 
-    if(g === finalistaL && !resetMatch){
+    if (g === finalistaL && !resetMatch) {
         resetMatch = true;
         div.innerHTML = `
             <h3>Partida de RESET!</h3>
@@ -598,9 +710,40 @@ function finalVencedor(g, p){
     div.innerHTML = `<h2>🏆 CAMPEÃO: ${g}</h2><h3>Vice: ${p}</h3>`;
     salvar();
 }
+function abrirPopupLosers(){
+    const popLoser=document.getElementById('popupLosers')
+    popLoser.classList.toggle('popup')
+    mostrarLosers()
+}
+function mostrarLosers() {
+   
+    // proteção extra
+    if (!containerLosers) return;
+
+    // LIMPA SEMPRE
+    containerLosers.replaceChildren();
+
+    // só mostra a partir de 2 perdedores
+    if (losersHistorico.length < 2) {
+        containerLosers.textContent = "Aguardando pelo menos 2 perdedores...";
+        return;
+    }
+
+    losersHistorico.forEach((nome, i) => {
+        const p = document.createElement('p');
+        p.textContent = `${i + 1}. ${nome}`;
+        containerLosers.appendChild(p);
+    });
+}
+function resetarLosers(){
+    losersHistorico = [];
+    containerLosers.replaceChildren();
+    salvar();
+}
+
 
 // ---------- RESET TOTAL ----------
-function resetarTudo(){
+function resetarTudo() {
     jogadores = [];
     winners = [];
     losers = [];
