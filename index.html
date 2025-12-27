@@ -32,6 +32,8 @@
         <ul id="listaJogadores"></ul>
         <h3>Remover Jogador</h3>
 <select id="selDelete"></select>
+<button onclick="banirJogador(document.getElementById('selDelete').value)">Banir Jogador</button>
+
 <button onclick="removerJogadorSelect()" style="background:red;color:white;">Deletar</button>
 
     </div>
@@ -90,9 +92,24 @@
     </div>
  </main>
  <!-- BOTÃO PARA ABRIR -->
+<button id="btn-lose" onclick="abrirPopupStatus()">Ver jogadores Eliminados </button>
 <button id="btn-lose" onclick="abrirPopupLosers()">Ver jogadores no Losers</button>
-
 <!-- POPUP / MODAL -->
+ <!--Eliminados/banidos-->
+ <div id="popupStatus" class="popup" style="display:none;">
+    <h3>Jogadores Eliminados e Banidos</h3>
+    <div id="conteudoLosers">
+        <h4>Eliminados (Losers)</h4>
+        <ul id="listaLosers"></ul>
+    </div>
+    <div id="conteudoBanidos">
+        <h4>Banidos</h4>
+        <ul id="listaBanidos"></ul>
+    </div>
+    <button onclick="fecharPopupStatus()">Fechar</button>
+     <button onclick="limparStatus()">Limpar</button>
+</div>
+<!--Loser-->
 <div id="popupLosers" class="popup">
     <div class="popup-conteudo">
         <h3>Jogadores que caíram do Winners</h3>

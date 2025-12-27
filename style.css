@@ -81,6 +81,7 @@ input {
 .match{
     display: block;
 background-color: #f5f2f2;
+color: green;
 padding: 5px;
 }
 #btn-lose{
@@ -93,4 +94,13 @@ margin-right: auto;
 }
 .link{
     text-decoration: none;
+}
+#popupStatus{
+    color: white;
+}
+#conteudoLosers{
+    border-bottom: 2px solid darkgray;
+}
+.resultadoL{
+    color: blue;
 }

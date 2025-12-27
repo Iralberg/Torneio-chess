@@ -40,6 +40,8 @@ let containerLosers = document.getElementById('popupLosersConteudo')
 let winners = [];
 let losers = [];
 let losersSeeded = false;
+let banidos = JSON.parse(localStorage.getItem("banidos")) || [];
+let eliminadosLosers = JSON.parse(localStorage.getItem("eliminadosLosers")) || [];
 
 let losersHistorico = [];
 let losersQueue = [];   // aqui entram o
@@ -431,13 +433,25 @@ function woW(i) {
 }
 function woL(i) {
     const partida = losers[i];
-
     if (!partida || partida.winner !== null) return;
 
-    // ambos eliminados definitivamente
     partida.winner = WO;
 
-    // se todas partidas encerraram, avança
+    [partida.p1, partida.p2].forEach(j => {
+        if (
+            j &&
+            j !== "BYE" &&
+            !eliminadosLosers.includes(j)
+        ) {
+            eliminadosLosers.push(j);
+        }
+    });
+
+    localStorage.setItem(
+        "eliminadosLosers",
+        JSON.stringify(eliminadosLosers)
+    );
+
     if (losers.every(m => m.winner !== null)) {
         avancarLosers();
     }
@@ -445,6 +459,8 @@ function woL(i) {
     renderLosers();
     salvar();
 }
+
+
 
 
 
@@ -537,6 +553,52 @@ function renderWinners() {
 
 // Monta primeira rodada ou próximas rodadas
 // ---------- INICIAR LOSERS ----------
+function banirJogador(nome) {
+    if (!nome) return alert("Nenhum jogador selecionado.");
+    if (!confirm(`Tem certeza que deseja banir ${nome}? Isso removerá o jogador de tudo!`)) return;
+banidos.push(nome);
+localStorage.setItem("banidos", JSON.stringify(banidos));
+
+    // 1. Remove da lista principal
+    jogadores = jogadores.filter(j => j.nome !== nome);
+
+    // 2. Remove de winners
+    winners = winners.filter(m => m.p1 !== nome && m.p2 !== nome)
+                     .map(m => {
+                         if (m.p1 === nome) m.p1 = "BYE";
+                         if (m.p2 === nome) m.p2 = "BYE";
+                         return m;
+                     });
+
+    // 3. Remove de losers
+    losers = losers.filter(m => m.p1 !== nome && m.p2 !== nome)
+                   .map(m => {
+                       if (m.p1 === nome) m.p1 = "BYE";
+                       if (m.p2 === nome) m.p2 = "BYE";
+                       return m;
+                   });
+
+    // 4. Remove da fila e histórico de losers
+    losersQueue = losersQueue.filter(n => n !== nome);
+    losersHistorico = losersHistorico.filter(n => n !== nome);
+
+    // 5. Remove de confrontos manuais
+    confrontosManuais = confrontosManuais.filter(c => c.p1 !== nome && c.p2 !== nome);
+
+    // 6. Atualiza finalistas se necessário
+    if (finalistaW === nome) finalistaW = null;
+    if (finalistaL === nome) finalistaL = null;
+
+    // 7. Atualiza interface
+    renderJogadores();
+    renderWinners();
+    renderLosers();
+    montarFinal();
+    atualizarSelects();
+    salvar();
+
+    alert(`Jogador ${nome} foi banido com sucesso!`);
+}
 
 function iniciarLosers() {
     if (losersQueue.length === 0) {
@@ -645,10 +707,26 @@ function renderLosers() {
 
 
 // Processa vencedor dos losers e avança rodada
+
+   
 function vencedorL(i, nome) {
     if (!losers[i] || losers[i].winner !== null) return;
 
     losers[i].winner = nome;
+
+    const perdedor = losers[i].p1 === nome ? losers[i].p2 : losers[i].p1;
+
+    if (
+        perdedor &&
+        perdedor !== "BYE" &&
+        !eliminadosLosers.includes(perdedor)
+    ) {
+        eliminadosLosers.push(perdedor);
+        localStorage.setItem(
+            "eliminadosLosers",
+            JSON.stringify(eliminadosLosers)
+        );
+    }
 
     if (losers.every(m => m.winner !== null)) {
         avancarLosers();
@@ -657,6 +735,8 @@ function vencedorL(i, nome) {
     renderLosers();
     salvar();
 }
+
+
 
 
 
@@ -742,11 +822,48 @@ function finalVencedor(g, p) {
     div.innerHTML = `<h2>🏆 CAMPEÃO: ${g}</h2><h3>Vice: ${p}</h3>`;
     salvar();
 }
+function limparStatus() {
+    if (!confirm("Deseja realmente limpar todos os eliminados e banidos?")) return;
+
+    eliminadosLosers = [];
+    banidos = [];
+
+    localStorage.setItem("eliminadosLosers", JSON.stringify([]));
+    localStorage.setItem("banidos", JSON.stringify([]));
+
+    document.getElementById("listaLosers").innerHTML = "";
+    document.getElementById("listaBanidos").innerHTML = "";
+
+    alert("Eliminados do Losers e banidos foram limpos.");
+}
+
+
 function abrirPopupLosers() {
     const popLoser = document.getElementById('popupLosers')
     popLoser.classList.toggle('popup')
     mostrarLosers()
 }
+function abrirPopupStatus() {
+    const popup = document.getElementById("popupStatus");
+    popup.style.display = "block";
+
+    // Lista apenas perdedores do losers
+    const ulLosers = document.getElementById("listaLosers");
+    ulLosers.innerHTML = eliminadosLosers
+    .map((nome, i) => `<li>${i + 1}. ${nome}</li>`)
+    .join("");
+
+
+    // Lista de banidos
+    const ulBanidos = document.getElementById("listaBanidos");
+    ulBanidos.innerHTML = banidos.map((nome, i) => `<li>${i + 1}. ${nome}</li>`).join("");
+}
+
+
+function fecharPopupStatus() {
+    document.getElementById("popupStatus").style.display = "none";
+}
+
 function mostrarLosers() {
 
     // proteção extra
