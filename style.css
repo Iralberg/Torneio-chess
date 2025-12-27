@@ -96,7 +96,16 @@ margin-right: auto;
     text-decoration: none;
 }
 #popupStatus{
+    background-color: #2b2b2b;
+    align-items: center;
+    font-size: 20px;
     color: white;
+    width: 800px;
+    height: 600px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
 }
 #conteudoLosers{
     border-bottom: 2px solid darkgray;
