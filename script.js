@@ -509,6 +509,11 @@ function renderWinners() {
     container.innerHTML = "";
 
     estado.winners.forEach((partida, index) => {
+estado.winners.forEach(m => {
+    if (m.winner !== null && m.winner !== "__WO__" && typeof m.winner !== "string") {
+        m.winner = null;
+    }
+});
 
         // GARANTIA DE ESTADO (crítico)
         if (partida.winner === undefined) {
@@ -1039,6 +1044,13 @@ function atualizarSelects() {
     if (sD) sD.innerHTML = estado.jogadores.map(j => `<option>${j.nome}</option>`).join("");
 }
 
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+        carregarEstado();
+        normalizarEstado();
+        renderTudo();
+    }
+});
 
 
 // -------------------------------------
