@@ -33,89 +33,57 @@ function emparelharJogadores(jogadores) {
     return pares;
 }
 // ---------- DADOS ----------
-let jogadores = [];
-let confrontosManuais = [];
-let containerLosers = document.getElementById('popupLosersConteudo')
-// brackets
-let winners = [];
-let losers = [];
-let losersSeeded = false;
-let banidos = JSON.parse(localStorage.getItem("banidos")) || [];
-let eliminadosLosers = JSON.parse(localStorage.getItem("eliminadosLosers")) || [];
+const ESTADO_VERSAO = 1;
 
-let losersHistorico = [];
-let losersQueue = [];   // aqui entram o
-let finalistaW = null;
-let finalistaL = null;
+let estado = {
+    versao: ESTADO_VERSAO,
 
-let resetMatch = false;
-let modo = "";
+    jogadores: [],
+    confrontosManuais: [],
+
+    winners: [],
+    losers: [],
+
+    losersQueue: [],
+    losersHistorico: [],
+
+    finalistaW: null,
+    finalistaL: null,
+
+    modo: "",
+    resetMatch: false,
+
+    banidos: [],
+    eliminadosLosers: []
+};
+
 
 // ---------- SALVAR ----------
-function salvar() {
-    localStorage.setItem("losersQueue", JSON.stringify(losersQueue));
-
-    localStorage.setItem("losersHistorico", JSON.stringify(losersHistorico));
-
-    localStorage.setItem("jogadores", JSON.stringify(jogadores));
-    localStorage.setItem("confrontosManuais", JSON.stringify(confrontosManuais));
-    localStorage.setItem("winnersData", JSON.stringify(winners));
-    localStorage.setItem("losersData", JSON.stringify(losers));
-    localStorage.setItem("finalistaW", finalistaW);
-    localStorage.setItem("finalistaL", finalistaL);
-    localStorage.setItem("resetMatch", resetMatch);
-    localStorage.setItem("modo", modo);
-
-    // HTML do render
-    localStorage.setItem("html_winners", document.getElementById("winners").innerHTML);
-    localStorage.setItem("html_losers", document.getElementById("losers").innerHTML);
-    localStorage.setItem("html_final", document.getElementById("final").innerHTML);
+function salvarEstado() {
+    localStorage.setItem("torneio", JSON.stringify(estado));
 }
 
+
+
+
+function carregarEstado() {
+    const raw = localStorage.getItem("torneio");
+    if (!raw) return;
+
+    try {
+        const data = JSON.parse(raw);
+        if (data.versao === ESTADO_VERSAO) {
+            estado = { ...estado, ...data };
+        }
+    } catch {
+        console.warn("Estado inválido");
+    }
+}
 // ---------- CARREGAR AO INICIAR ----------
-window.onload = function () {
-    if (localStorage.getItem("losersQueue")) {
-        losersQueue = JSON.parse(localStorage.getItem("losersQueue"));
-    }
-
-    if (localStorage.getItem("losersHistorico")) {
-        losersHistorico = JSON.parse(localStorage.getItem("losersHistorico"));
-    }
-
-    if (localStorage.getItem("jogadores")) {
-        jogadores = JSON.parse(localStorage.getItem("jogadores"));
-    }
-    if (localStorage.getItem("confrontosManuais")) {
-        confrontosManuais = JSON.parse(localStorage.getItem("confrontosManuais"));
-    }
-    if (localStorage.getItem("winnersData")) {
-        winners = JSON.parse(localStorage.getItem("winnersData"));
-    }
-    if (localStorage.getItem("losersData")) {
-        losers = JSON.parse(localStorage.getItem("losersData"));
-    }
-
-    finalistaW = localStorage.getItem("finalistaW") || null;
-    finalistaL = localStorage.getItem("finalistaL") || null;
-    resetMatch = localStorage.getItem("resetMatch") === "true";
-    modo = localStorage.getItem("modo") || "";
-
-    renderJogadores();
-    atualizarSelects();
-
-    // Restaurar HTML do torneio
-    if (localStorage.getItem("html_winners"))
-        document.getElementById("winners").innerHTML = localStorage.getItem("html_winners");
-
-    if (localStorage.getItem("html_losers"))
-        document.getElementById("losers").innerHTML = localStorage.getItem("html_losers");
-
-    if (localStorage.getItem("html_final"))
-        document.getElementById("final").innerHTML = localStorage.getItem("html_final");
-
-    if (modo === "manual") {
-        document.getElementById("manualArea").style.display = "block";
-    }
+window.onload = () => {
+    carregarEstado();
+    normalizarEstado();
+    renderTudo();
 };
 
 // ---------- CADASTRO ----------
@@ -132,24 +100,27 @@ function addJogador() {
     if (!nome) return alert("Digite o nome!");
     if (isNaN(rating)) rating = 0;
 
-    if (jogadores.some(j => j.nome === nome))
+    if (estado.jogadores.some(j => j.nome === nome))
         return alert("Jogador já existe!");
-
-    jogadores.push({ nome, rating });
 
     document.getElementById("nomeJogador").value = "";
     document.getElementById("ratingJogador").value = "";
     document.getElementById("nomeJogador").focus();
 
-    renderJogadores();
-    atualizarSelects();
-    salvar();
+    estado.jogadores.push({ nome, rating });
+    salvarEstado();
+    renderTudo();
+
+
+
+
+
 }
 
 
 function renderJogadores() {
     document.getElementById("listaJogadores").innerHTML =
-        jogadores
+        estado.jogadores
             .map(j => `
                 <li>
                     ${j.nome} — Rating: ${j.rating}
@@ -168,7 +139,7 @@ function removerJogadorSelect() {
     if (!nome) return alert("Nenhum jogador selecionado.");
     if (!confirm(`Remover jogador ${nome}?`)) return;
 
-    jogadores = jogadores.filter(j => j.nome !== nome);
+    estado.jogadores = estado.jogadores.filter(j => j.nome !== nome);
 
     renderJogadores();
     atualizarSelects();
@@ -227,10 +198,10 @@ function criarParesOrdenados(lista) {
 }
 // ---------- MODO MANUAL ----------
 function modoManual() {
-    modo = "manual";
+    estado.modo = "manual";
     document.getElementById("manualArea").style.display = "block";
     atualizarSelects();
-    salvar();
+    salvarEstado();
 }
 
 function addManual() {
@@ -239,33 +210,33 @@ function addManual() {
 
     if (A === B) return alert("Jogadores iguais!");
 
-    confrontosManuais.push({ p1: A, p2: B });
+    estado.confrontosManuais.push({ p1: A, p2: B });
     renderManuais();
-    salvar();
+    salvarEstado();
 }
 
 function renderManuais() {
     document.getElementById("listaManuais").innerHTML =
-        confrontosManuais.map(c => `<li>${c.p1} vs ${c.p2}</li>`).join("");
+        estado.confrontosManuais.map(c => `<li>${c.p1} vs ${c.p2}</li>`).join("");
 }
 
 function iniciarManual() {
-    if (confrontosManuais.length === 0) return alert("Sem confrontos!");
-    winners = confrontosManuais.map(c => ({ ...c }));
+    if (estado.confrontosManuais.length === 0) return alert("Sem confrontos!");
+    estado.winners = estado.confrontosManuais.map(c => ({ ...c }));
     iniciarTorneio();
 }
 
 // ---------- SORTEIO ----------
 function gerarAutomatico() {
-    modo = "sorteio";
+    estado.modo = "sorteio";
 
-    if (jogadores.length < 2) return alert("Poucos jogadores!");
+    if (estado.jogadores.length < 2) return alert("Poucos jogadores!");
 
-    let emb = [...jogadores].sort(() => Math.random() - 0.5);
+    let emb = [...estado.jogadores].sort(() => Math.random() - 0.5);
 
-    winners = [];
+    estado.winners = [];
     for (let i = 0; i < emb.length; i += 2) {
-        winners.push({
+        estado.winners.push({
             p1: emb[i].nome,
             p2: emb[i + 1] ? emb[i + 1].nome : "BYE"
 
@@ -276,12 +247,12 @@ function gerarAutomatico() {
     iniciarTorneio();
 }
 function iniciarPorRating() {
-    if (jogadores.length < 2) return alert("Poucos jogadores!");
+    if (estado.jogadores.length < 2) return alert("Poucos jogadores!");
 
-    modo = "rating";
+    estado.modo = "rating";
 
     // Ordena do maior pro menor rating
-    let lista = [...jogadores].sort((a, b) => b.rating - a.rating);
+    let lista = [...estado.jogadores].sort((a, b) => b.rating - a.rating);
 
     // ---------- EMPARELHAMENTO (400 + fallback) ----------
     let usados = new Set();
@@ -344,7 +315,7 @@ function iniciarPorRating() {
         }
     }
 
-    winners = pares;
+    estado.winners = pares;
     iniciarTorneio();
 }
 
@@ -355,19 +326,19 @@ function iniciarPorRating() {
 
 // ---------- INICIAR TORNEIO ----------
 function iniciarTorneio() {
-    losers = [];
-    finalistaL = null;
-    finalistaW = null;
-    losersSeeded = false;
+    estado.losers = [];
+    estado.finalistaL = null;
+    estado.finalistaW = null;
+    estado.losersSeeded = false;
 
-    resetMatch = false;
-    confrontosManuais = [];
+    estado.resetMatch = false;
+    estado.confrontosManuais = [];
 
     renderWinners();
     renderLosers();
     document.getElementById("final").innerHTML = "";
 
-    salvar();
+    salvarEstado();
 }
 
 // ---------- WINNERS ----------
@@ -375,19 +346,19 @@ const WO = "__WO__";
 
 function avancarWinners() {
 
-    const vencedores = winners
+    const vencedores = estado.winners
         .filter(m => m.winner && m.winner !== WO)
         .map(m => m.winner);
 
     if (vencedores.length === 0) {
         // todos WO → ninguém avança
-        finalistaW = null;
+        estado.finalistaW = null;
         iniciarLosers();
         return;
     }
 
     if (vencedores.length === 1) {
-        finalistaW = vencedores[0];
+        estado.finalistaW = vencedores[0];
         iniciarLosers();
         return;
     }
@@ -402,37 +373,37 @@ function avancarWinners() {
         });
     }
 
-    winners = novaRodada;
+    estado.winners = novaRodada;
 }
 
 
 
 //WO
 function woW(i) {
-    const partida = winners[i];
+    const partida = estado.winners[i];
 
     if (!partida || partida.winner !== null) return;
 
     // envia os dois jogadores para o losers
     [partida.p1, partida.p2].forEach(j => {
         if (j && j !== "BYE") {
-            if (!losersQueue.includes(j)) losersQueue.push(j);
-            if (!losersHistorico.includes(j)) losersHistorico.push(j);
+            if (!estado.losersQueue.includes(j)) estado.losersQueue.push(j);
+            if (!estado.losersHistorico.includes(j)) estado.losersHistorico.push(j);
         }
     });
 
     // marca corretamente como WO
     partida.winner = WO;
 
-    if (winners.every(m => m.winner !== null)) {
+    if (estado.winners.every(m => m.winner !== null)) {
         avancarWinners();
     }
 
     renderWinners();
-    salvar();
+    salvarEstado();
 }
 function woL(i) {
-    const partida = losers[i];
+    const partida = estado.losers[i];
     if (!partida || partida.winner !== null) return;
 
     partida.winner = WO;
@@ -441,56 +412,83 @@ function woL(i) {
         if (
             j &&
             j !== "BYE" &&
-            !eliminadosLosers.includes(j)
+            !estado.eliminadosLosers.includes(j)
         ) {
-            eliminadosLosers.push(j);
+            estado.eliminadosLosers.push(j);
         }
     });
 
     localStorage.setItem(
         "eliminadosLosers",
-        JSON.stringify(eliminadosLosers)
+        JSON.stringify(estado.eliminadosLosers)
     );
 
-    if (losers.every(m => m.winner !== null)) {
+    if (estado.losers.every(m => m.winner !== null)) {
         avancarLosers();
     }
 
     renderLosers();
-    salvar();
+    salvarEstado();
 }
 
+function enviarParaLosers(nome) {
+    if (!estado.losersQueue.includes(nome)) {
+        estado.losersQueue.push(nome);
+    }
+    if (!estado.losersHistorico.includes(nome)) {
+        estado.losersHistorico.push(nome);
+    }
+}
+enviarParaLosers(perdedor);
+renderTudo
 
 
+function normalizarEstado() {
+
+    estado.jogadores ??= [];
+    estado.winners ??= [];
+    estado.losers ??= [];
+
+    estado.losersQueue ??= [];
+    estado.losersHistorico ??= [];
+
+    estado.banidos ??= [];
+    estado.eliminadosLosers ??= [];
+
+    estado.winners.forEach(m => {
+        if (!("winner" in m)) m.winner = null;
+    });
+
+    estado.losers.forEach(m => {
+        if (!("winner" in m)) m.winner = null;
+    });
+}
 
 
 // ---------- LOSERS (CORRIGIDO) ----------
 function getRating(nome) {
-    const j = jogadores.find(j => j.nome === nome);
+    const j = estado.jogadores.find(j => j.nome === nome);
     return j ? j.rating : 0;
 }
 
 // Entra perdedor na fila sem duplicar
 function vencedorW(i, nome) {
-    let partida = winners[i];
-    let perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
-    if (!winners[i] || winners[i].winner) return;
-    if (perdedor !== "BYE") {
-
-        // fila do losers
-        if (!losersQueue.includes(perdedor)) {
-            losersQueue.push(perdedor);
-        }
-
-        // histórico permanente (apenas winners)
-        if (!losersHistorico.includes(perdedor)) {
-            losersHistorico.push(perdedor);
-        }
+   const partida = estado.winners[i];
+   const perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
+    if (!estado.winners[i] || estado.winners[i].winner) return;
+   
+if (perdedor !== "BYE") {
+    if (!estado.losersQueue.includes(perdedor)) {
+        estado.losersQueue.push(perdedor);
     }
+    if (!estado.losersHistorico.includes(perdedor)) {
+        estado.losersHistorico.push(perdedor);
+    }
+}
 
 
 
-    winners[i].winner = nome;
+    partida.winner = nome;
 
     let caixa = document.getElementById("w_partida_" + i);
     if (caixa) {
@@ -498,18 +496,19 @@ function vencedorW(i, nome) {
             `<strong>Vencedor: ${nome}</strong>`;
     }
 
-    if (winners.every(m => m.winner)) {
+    if (estado.winners.every(m => m.winner)) {
         avancarWinners();
     }
 
-    renderWinners();
-    salvar();
+
+salvarEstado();
+renderTudo();
 }
 function renderWinners() {
     const container = document.getElementById("winners");
     container.innerHTML = "";
 
-    winners.forEach((partida, index) => {
+    estado.winners.forEach((partida, index) => {
 
         // GARANTIA DE ESTADO (crítico)
         if (partida.winner === undefined) {
@@ -549,6 +548,13 @@ function renderWinners() {
         container.appendChild(div);
     });
 }
+function renderTudo() {
+    renderJogadores();
+    renderWinners();
+    renderLosers();
+    montarFinal();
+   
+}
 
 
 // Monta primeira rodada ou próximas rodadas
@@ -556,38 +562,38 @@ function renderWinners() {
 function banirJogador(nome) {
     if (!nome) return alert("Nenhum jogador selecionado.");
     if (!confirm(`Tem certeza que deseja banir ${nome}? Isso removerá o jogador de tudo!`)) return;
-banidos.push(nome);
-localStorage.setItem("banidos", JSON.stringify(banidos));
+    estado.banidos.push(nome);
+    localStorage.setItem("banidos", JSON.stringify(estado.banidos));
 
     // 1. Remove da lista principal
-    jogadores = jogadores.filter(j => j.nome !== nome);
+    estado.jogadores = estado.jogadores.filter(j => j.nome !== nome);
 
     // 2. Remove de winners
-    winners = winners.filter(m => m.p1 !== nome && m.p2 !== nome)
-                     .map(m => {
-                         if (m.p1 === nome) m.p1 = "BYE";
-                         if (m.p2 === nome) m.p2 = "BYE";
-                         return m;
-                     });
+    estado.winners = estado.winners.filter(m => m.p1 !== nome && m.p2 !== nome)
+        .map(m => {
+            if (m.p1 === nome) m.p1 = "BYE";
+            if (m.p2 === nome) m.p2 = "BYE";
+            return m;
+        });
 
     // 3. Remove de losers
-    losers = losers.filter(m => m.p1 !== nome && m.p2 !== nome)
-                   .map(m => {
-                       if (m.p1 === nome) m.p1 = "BYE";
-                       if (m.p2 === nome) m.p2 = "BYE";
-                       return m;
-                   });
+    estado.losers = estado.losers.filter(m => m.p1 !== nome && m.p2 !== nome)
+        .map(m => {
+            if (m.p1 === nome) m.p1 = "BYE";
+            if (m.p2 === nome) m.p2 = "BYE";
+            return m;
+        });
 
     // 4. Remove da fila e histórico de losers
-    losersQueue = losersQueue.filter(n => n !== nome);
-    losersHistorico = losersHistorico.filter(n => n !== nome);
+    estado.losersQueue = estado.losersQueue.filter(n => n !== nome);
+    estado.losersHistorico = estado.losersHistorico.filter(n => n !== nome);
 
     // 5. Remove de confrontos manuais
-    confrontosManuais = confrontosManuais.filter(c => c.p1 !== nome && c.p2 !== nome);
+    estado.confrontosManuais = estado.confrontosManuais.filter(c => c.p1 !== nome && c.p2 !== nome);
 
     // 6. Atualiza finalistas se necessário
-    if (finalistaW === nome) finalistaW = null;
-    if (finalistaL === nome) finalistaL = null;
+    if (estado.finalistaW === nome) estado.finalistaW = null;
+    if (estado.finalistaL === nome) estado.finalistaL = null;
 
     // 7. Atualiza interface
     renderJogadores();
@@ -595,17 +601,18 @@ localStorage.setItem("banidos", JSON.stringify(banidos));
     renderLosers();
     montarFinal();
     atualizarSelects();
-    salvar();
+    salvarEstado();
+   
 
     alert(`Jogador ${nome} foi banido com sucesso!`);
 }
 
 function iniciarLosers() {
-    if (losersQueue.length === 0) {
-        losers = [];
-        finalistaL = null;
+    if (estado.losersQueue.length === 0) {
+        estado.losers = [];
+        estado.finalistaL = null;
         montarFinal();
-        salvar();
+        salvarEstado();
         return;
     }
 
@@ -625,9 +632,9 @@ function iniciarLosers() {
 
 function gerarLosers() {
     const modo = document.getElementById("modoLosers").value;
-    let lista = [...losersQueue];
-    losersQueue = [];  // limpa fila para não duplicar
-    losersSeeded = true;
+    let lista = [...estado.losersQueue];
+    estado.losersQueue = [];  // limpa fila para não duplicar
+    estado.losersSeeded = true;
 
     if (modo === "aleatorio") {
         lista = shuffle(lista);
@@ -636,9 +643,9 @@ function gerarLosers() {
     }
 
     // Gera os pares
-    losers = [];
+    estado.losers = [];
     for (let i = 0; i < lista.length; i += 2) {
-        losers.push({
+        estado.losers.push({
             p1: lista[i],
             p2: lista[i + 1] ?? "BYE",
             winner: null
@@ -647,7 +654,8 @@ function gerarLosers() {
 
     renderLosers();
     document.getElementById("opcoesLosers").innerHTML = ""; // remove seleção
-    salvar();
+    salvarEstado();
+    renderTudo()
 }
 
 
@@ -656,15 +664,15 @@ function gerarLosers() {
 function renderLosers() {
     let div = document.getElementById("losers");
 
-    if (!losers || losers.length === 0) {
+    if (!estado.losers || estado.losers.length === 0) {
         div.innerHTML = "<p>Aguardando finalista.</p>";
-        salvar();
+        salvarEstado();
         return;
     }
 
     div.innerHTML = "";
 
-    losers.forEach((m, i) => {
+    estado.losers.forEach((m, i) => {
         // Se algum objeto voltar quebrado do localStorage, normaliza:
         if (!m || typeof m !== "object") {
             return;
@@ -701,39 +709,47 @@ function renderLosers() {
         </div>`;
     });
 
-    salvar();
+    salvarEstado();
 }
 
 
 
 // Processa vencedor dos losers e avança rodada
+function alterarAlgo() {
+    let nomeJogador=document.getElementById('nomeJogador')
+  let   ratingJogador=document.getElementById('ratingJogador')
+    estado.jogadores.push({nome:nomeJogador.value,rating:Number(ratingJogador.value)})
+    salvarEstado()
+    renderTudo()
+}
 
-   
+
 function vencedorL(i, nome) {
-    if (!losers[i] || losers[i].winner !== null) return;
+    if (!estado.losers[i] || estado.losers[i].winner !== null) return;
 
-    losers[i].winner = nome;
+    estado.losers[i].winner = nome;
 
-    const perdedor = losers[i].p1 === nome ? losers[i].p2 : losers[i].p1;
+    const perdedor = estado.losers[i].p1 === nome ? estado.losers[i].p2 : estado.losers[i].p1;
 
     if (
         perdedor &&
         perdedor !== "BYE" &&
-        !eliminadosLosers.includes(perdedor)
+        !estado.eliminadosLosers.includes(perdedor)
     ) {
-        eliminadosLosers.push(perdedor);
+        estado.eliminadosLosers.push(perdedor);
         localStorage.setItem(
             "eliminadosLosers",
-            JSON.stringify(eliminadosLosers)
+            JSON.stringify(estado.eliminadosLosers)
         );
     }
 
-    if (losers.every(m => m.winner !== null)) {
+    if (estado.losers.every(m => m.winner !== null)) {
         avancarLosers();
     }
 
     renderLosers();
-    salvar();
+    salvarEstado();
+    renderTudo()
 }
 
 
@@ -745,7 +761,7 @@ function avancarLosers() {
 
     const vencedores = [];
 
-    losers.forEach(m => {
+    estado.losers.forEach(m => {
         // ignora WO
         if (m.winner && m.winner !== WO) {
             vencedores.push(m.winner);
@@ -754,7 +770,7 @@ function avancarLosers() {
 
     // ninguém sobrou
     if (vencedores.length === 0) {
-        finalistaL = null;
+        estado.finalistaL = null;
         montarFinal();
         salvar();
         return;
@@ -762,9 +778,9 @@ function avancarLosers() {
 
     // só um → finalista dos losers
     if (vencedores.length === 1) {
-        finalistaL = vencedores[0];
+        estado.finalistaL = vencedores[0];
         montarFinal();
-        salvar();
+        salvarEstado();
         return;
     }
 
@@ -778,55 +794,62 @@ function avancarLosers() {
         });
     }
 
-    losers = pares;
+    estado.losers = pares;
     renderLosers();
-    salvar();
+    renderTudo();
+    salvarEstado();
 }
 
 // ---------- LOSERS ------
 
 // ---------- GRANDE FINAL ----------
 function montarFinal() {
-    let div = document.getElementById("final");
+    const div = document.getElementById("final");
+    if (!div) return;
 
-    if (!finalistaW) return;
-    if (finalistaL === null) {
-        div.innerHTML = `<h3>Campeão: ${finalistaW}</h3>`;
-        salvar();
+    // Limpa sempre
+    div.innerHTML = "";
+
+    // Só mostra a final quando AMBOS existem
+    if (!estado.finalistaW || !estado.finalistaL) {
         return;
     }
 
+    // Grande Final
     div.innerHTML = `
-        <h3>${finalistaW} (WINNERS) vs ${finalistaL} (LOSERS)</h3>
-        <button onclick="finalVencedor('${finalistaW}', '${finalistaL}')">${finalistaW}</button>
-        <button onclick="finalVencedor('${finalistaL}', '${finalistaW}')">${finalistaL}</button>
+        <h3>${estado.finalistaW} (WINNERS) vs ${estado.finalistaL} (LOSERS)</h3>
+        <button onclick="finalVencedor('${estado.finalistaW}', '${estado.finalistaL}')">
+            ${estado.finalistaW}
+        </button>
+        <button onclick="finalVencedor('${estado.finalistaL}', '${estado.finalistaW}')">
+            ${estado.finalistaL}
+        </button>
     `;
-
-    salvar();
 }
+
 
 function finalVencedor(g, p) {
     let div = document.getElementById("final");
 
-    if (g === finalistaL && !resetMatch) {
-        resetMatch = true;
+    if (g === estado.finalistaL && !estado.resetMatch) {
+        estado.resetMatch = true;
         div.innerHTML = `
             <h3>Partida de RESET!</h3>
-            <button onclick="finalVencedor('${finalistaW}', '${finalistaL}')">${finalistaW}</button>
-            <button onclick="finalVencedor('${finalistaL}', '${finalistaW}')">${finalistaL}</button>
+            <button onclick="finalVencedor('${estado.finalistaW}', '${estado.finalistaL}')">${estado.finalistaW}</button>
+            <button onclick="finalVencedor('${estado.finalistaL}', '${estado.finalistaW}')">${estado.finalistaL}</button>
         `;
-        salvar();
+        salvarEstado();
         return;
     }
 
     div.innerHTML = `<h2>🏆 CAMPEÃO: ${g}</h2><h3>Vice: ${p}</h3>`;
-    salvar();
+    salvarEstado();
 }
 function limparStatus() {
     if (!confirm("Deseja realmente limpar todos os eliminados e banidos?")) return;
 
-    eliminadosLosers = [];
-    banidos = [];
+    estado.eliminadosLosers = [];
+    estado.banidos = [];
 
     localStorage.setItem("eliminadosLosers", JSON.stringify([]));
     localStorage.setItem("banidos", JSON.stringify([]));
@@ -849,14 +872,15 @@ function abrirPopupStatus() {
 
     // Lista apenas perdedores do losers
     const ulLosers = document.getElementById("listaLosers");
-    ulLosers.innerHTML = eliminadosLosers
-    .map((nome, i) => `<li>${i + 1}. ${nome}</li>`)
-    .join("");
+    ulLosers.innerHTML = estado.eliminadosLosers
+        .map((nome, i) => `<li>${i + 1}. ${nome}</li>`)
+        .join("");
 
 
     // Lista de banidos
     const ulBanidos = document.getElementById("listaBanidos");
-    ulBanidos.innerHTML = banidos.map((nome, i) => `<li>${i + 1}. ${nome}</li>`).join("");
+    ulBanidos.innerHTML = estado.banidos.map((nome, i) => `<li>${i + 1}. ${nome}</li>`).join("");
+    mostrarLosers()
 }
 
 
@@ -865,73 +889,77 @@ function fecharPopupStatus() {
 }
 
 function mostrarLosers() {
+    const container = document.getElementById("popupLosersConteudo");
+    if (!container) return;
 
-    // proteção extra
-    if (!containerLosers) return;
+    // limpa sempre
+    container.innerHTML = "";
 
-    // LIMPA SEMPRE
-    containerLosers.replaceChildren();
-
-    // só mostra a partir de 2 perdedores
-    if (losersHistorico.length < 2) {
-        containerLosers.textContent = "Aguardando pelo menos 2 perdedores...";
+    if (!estado.losersHistorico || estado.losersHistorico.length === 0) {
+        container.innerHTML = "<p>Nenhum jogador caiu do Winners ainda.</p>";
         return;
     }
 
-    losersHistorico.forEach((nome, i) => {
-        const p = document.createElement('p');
+    estado.losersHistorico.forEach((nome, i) => {
+        const p = document.createElement("p");
         p.textContent = `${i + 1}. ${nome}`;
-        containerLosers.appendChild(p);
+        container.appendChild(p);
     });
 }
+
 function resetarLosers() {
-    losersHistorico = [];
-    containerLosers.replaceChildren();
-    salvar();
+    if (!confirm("Deseja realmente resetar o histórico de losers?")) return;
+
+    estado.losersHistorico = [];
+    salvarEstado();
+    mostrarLosers();
 }
+
 
 
 // ---------- RESET TOTAL ----------
 function resetarTudo() {
-    jogadores = [];
-    winners = [];
-    losers = [];
-    confrontosManuais = [];
-    finalistaL = null;
-    finalistaW = null;
-    resetMatch = false;
-    modo = "";
+    
+    estado = {
+        versao: ESTADO_VERSAO,
+        jogadores: [],
+        confrontosManuais: [],
+        winners: [],
+        losers: [],
+        losersQueue: [],
+        losersHistorico: [],
+        finalistaW: null,
+        finalistaL: null,
+        modo: "",
+        resetMatch: false,
+        banidos: [],
+        eliminadosLosers: []
+    };
 
-    localStorage.clear();
-
-    document.getElementById("listaJogadores").innerHTML = "";
-    document.getElementById("listaManuais").innerHTML = "";
-    document.getElementById("manualArea").style.display = "none";
-    document.getElementById("winners").innerHTML = "";
-    document.getElementById("losers").innerHTML = "";
-    document.getElementById("final").innerHTML = "";
+    salvarEstado();
+    renderTudo();
 }
 // -------------------------------------
 // EXPORTAR PLANILHA (XLSX)
 // -------------------------------------
 function exportarPlanilha() {
 
-    if (jogadores.length === 0) {
+    if (estado.jogadores.length === 0) {
         alert("Nenhum jogador cadastrado!");
         return;
     }
 
     // Cria matriz: cabeçalho + jogadores
     let dados = [["Nome", "Rating"]];
-    jogadores.forEach(j => dados.push([j.nome, j.rating]));
+    estado.jogadores.forEach(j => dados.push([j.nome, j.rating]));
 
     // Converte para planilha
     let ws = XLSX.utils.aoa_to_sheet(dados);
     let wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Jogadores");
+    XLSX.utils.book_append_sheet(wb, ws, "estado.Jogadores");
 
     // Baixa arquivo
-    XLSX.writeFile(wb, "jogadores.xlsx");
+    XLSX.writeFile(wb, "estado.jogadores.xlsx");
 }
 
 
@@ -980,14 +1008,14 @@ function importarPlanilha(event) {
         }
 
         // Substitui completamente a lista atual
-        jogadores = novaLista;
+        estado.jogadores = novaLista;
 
         // Atualiza interface
         renderJogadores();
         atualizarSelects();
-        salvar();
+        salvarEstado();
 
-        console.log("Jogadores importados:", jogadores);
+        console.log("Jogadores importados:", estado.jogadores);
 
         alert("Jogadores importados com sucesso!");
     };
@@ -1006,9 +1034,9 @@ function atualizarSelects() {
     let sB = document.getElementById("selB");
     let sD = document.getElementById("selDelete");
 
-    if (sA) sA.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
-    if (sB) sB.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
-    if (sD) sD.innerHTML = jogadores.map(j => `<option>${j.nome}</option>`).join("");
+    if (sA) sA.innerHTML = estado.jogadores.map(j => `<option>${j.nome}</option>`).join("");
+    if (sB) sB.innerHTML = estado.jogadores.map(j => `<option>${j.nome}</option>`).join("");
+    if (sD) sD.innerHTML = estado.jogadores.map(j => `<option>${j.nome}</option>`).join("");
 }
 
 
@@ -1021,11 +1049,12 @@ function removerJogadorSelect() {
 
     if (!nome) return;
 
-    jogadores = jogadores.filter(j => j.nome !== nome);
+    estado.jogadores = estado.jogadores.filter(j => j.nome !== nome);
 
     renderJogadores();
     atualizarSelects();
-    salvar();
+    salvarEstado();
+    renderTudo()
 
     alert("Jogador removido: " + nome);
 }
