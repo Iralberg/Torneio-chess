@@ -68,3 +68,18 @@ padding-top: 10px;
     background-color: red;
     color: white;
 }
+a{
+    text-decoration: none;
+}
+.sitepri{
+    display: block;
+    margin: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: red;
+    font-size: 20px;
+    text-decoration: none;
+}
+.sitepri:hover{
+    color: white;
+}
