@@ -57,6 +57,7 @@ button {
  
 }
 .match{
+    border-bottom:3px solid rgb(0, 0, 0) ;
 background-color: rgb(185, 185, 185);
 padding-top: 10px;
 }

@@ -5,6 +5,10 @@ function agendarPartida() {
     const j2 = document.getElementById("jogadorPreto").value;
     const data = document.getElementById("data").value;
     const hora = document.getElementById("hora").value;
+  const titulo01 = document.getElementById("nomePartida").value;
+
+console.log("Titulo:", document.getElementById("nomePartida"));
+
 
     if (!j1 || !j2 || !data || !hora) {
         alert("Preencha todos os campos");
@@ -26,6 +30,7 @@ function agendarPartida() {
     }
 
     partidas.push({
+        titulo01,
         branco,
         preto,
         data,
@@ -39,6 +44,20 @@ function agendarPartida() {
 }
 
 
+flatpickr("#data", {
+    altInput: true,
+    altFormat: "d/m/Y", // VISUAL (BR)
+    dateFormat: "Y-m-d", // VALOR REAL (ISO)
+    locale: "pt"
+});
+
+function formatarDataBR(dataISO) {
+    const [ano, mes, dia] = dataISO.split("-");
+    return `${dia}/${mes}/${ano}`;
+}
+
+
+
 function renderPartidas() {
     const div = document.getElementById("listaPartidas");
     div.innerHTML = "";
@@ -48,9 +67,10 @@ function renderPartidas() {
         card.className = "match";
 
         card.innerHTML = `
+        <h3><strong>${p.titulo01 || "Partida sem título"}</strong></h3>
             <strong>${p.branco}</strong> (Branco) x
             <strong>${p.preto}</strong> (Preto)<br>
-            ${p.data} ${p.hora}<br>
+            ${formatarDataBR(p.data)} ${p.hora}<br>
             Vencedor: ${p.vencedor || "—"}<br>
             <button onclick="definirVencedor(${i}, 'branco')">Branco</button>
             <button onclick="definirVencedor(${i}, 'preto')">Preto</button>
@@ -77,6 +97,8 @@ function definirVencedor(index, lado) {
 
 
 function apagarPartida(index) {
+   
+
     if (!confirm("Deseja apagar esta partida?")) return;
     partidas.splice(index, 1);
     salvarPartidas();
@@ -173,13 +195,14 @@ function limparCadastro() {
     document.getElementById("nome").value = "";
     document.getElementById("rating").value = "";
 }
-
 function limparAgenda() {
     document.getElementById("jogadorBranco").value = "";
     document.getElementById("jogadorPreto").value = "";
     document.getElementById("data").value = "";
     document.getElementById("hora").value = "";
+    document.getElementById("nomePartida").value = "";
 }
+
 
 
 function importarPlanilha(event) {

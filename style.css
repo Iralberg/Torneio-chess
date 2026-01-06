@@ -79,6 +79,7 @@ input {
     max-width: 90%;
 }
 .match{
+    
     display: block;
 background-color: #f5f2f2;
 color: green;
@@ -112,4 +113,7 @@ margin-right: auto;
 }
 .resultadoL{
     color: blue;
+}
+select{
+    cursor: pointer;
 }

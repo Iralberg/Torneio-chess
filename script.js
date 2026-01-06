@@ -132,20 +132,6 @@ function renderJogadores() {
 
 
 
-function removerJogadorSelect() {
-    let sel = document.getElementById("selDelete");
-    let nome = sel.value;
-
-    if (!nome) return alert("Nenhum jogador selecionado.");
-    if (!confirm(`Remover jogador ${nome}?`)) return;
-
-    estado.jogadores = estado.jogadores.filter(j => j.nome !== nome);
-
-    renderJogadores();
-    atualizarSelects();
-    salvar();
-}
-
 // ---------- RATING / SEEDING ----------
 function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -558,6 +544,7 @@ function renderTudo() {
     renderWinners();
     renderLosers();
     montarFinal();
+    atualizarSelects(); 
    
 }
 
