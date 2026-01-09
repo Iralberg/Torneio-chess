@@ -553,51 +553,60 @@ function renderTudo() {
 // ---------- INICIAR LOSERS ----------
 function banirJogador(nome) {
     if (!nome) return alert("Nenhum jogador selecionado.");
-    if (!confirm(`Tem certeza que deseja banir ${nome}? Isso removerá o jogador de tudo!`)) return;
-    estado.banidos.push(nome);
-    localStorage.setItem("banidos", JSON.stringify(estado.banidos));
+    if (!confirm(`Tem certeza que deseja Eliminar ${nome}?`)) return;
 
-    // 1. Remove da lista principal
+    if (!estado.banidos.includes(nome)) {
+        estado.banidos.push(nome);
+    }
+
+    // Remove da lista principal
     estado.jogadores = estado.jogadores.filter(j => j.nome !== nome);
 
-    // 2. Remove de winners
-    estado.winners = estado.winners.filter(m => m.p1 !== nome && m.p2 !== nome)
-        .map(m => {
-            if (m.p1 === nome) m.p1 = "BYE";
-            if (m.p2 === nome) m.p2 = "BYE";
-            return m;
-        });
+    // -------- WINNERS --------
+    estado.winners.forEach((m, i) => {
+        if (m.winner !== null) return;
 
-    // 3. Remove de losers
-    estado.losers = estado.losers.filter(m => m.p1 !== nome && m.p2 !== nome)
-        .map(m => {
-            if (m.p1 === nome) m.p1 = "BYE";
-            if (m.p2 === nome) m.p2 = "BYE";
-            return m;
-        });
+        if (m.p1 === nome || m.p2 === nome) {
+            const adversario = m.p1 === nome ? m.p2 : m.p1;
 
-    // 4. Remove da fila e histórico de losers
+            // vitória automática do adversário
+            if (adversario && adversario !== "BYE") {
+                vencedorW(i, adversario);
+            } else {
+                m.winner = WO;
+            }
+        }
+    });
+
+    // -------- LOSERS --------
+    estado.losers.forEach((m, i) => {
+        if (m.winner !== null) return;
+
+        if (m.p1 === nome || m.p2 === nome) {
+            const adversario = m.p1 === nome ? m.p2 : m.p1;
+
+            if (adversario && adversario !== "BYE") {
+                vencedorL(i, adversario);
+            } else {
+                m.winner = WO;
+            }
+        }
+    });
+
+    // Remove da fila e histórico
     estado.losersQueue = estado.losersQueue.filter(n => n !== nome);
     estado.losersHistorico = estado.losersHistorico.filter(n => n !== nome);
 
-    // 5. Remove de confrontos manuais
-    estado.confrontosManuais = estado.confrontosManuais.filter(c => c.p1 !== nome && c.p2 !== nome);
-
-    // 6. Atualiza finalistas se necessário
+    // Finalistas
     if (estado.finalistaW === nome) estado.finalistaW = null;
     if (estado.finalistaL === nome) estado.finalistaL = null;
 
-    // 7. Atualiza interface
-    renderJogadores();
-    renderWinners();
-    renderLosers();
-    montarFinal();
-    atualizarSelects();
     salvarEstado();
-   
+    renderTudo();
 
-    alert(`Jogador ${nome} foi banido com sucesso!`);
+    alert(`Jogador ${nome} foi Eliminado. O adversário avançou automaticamente.`);
 }
+
 
 function iniciarLosers() {
     if (estado.losersQueue.length === 0) {
