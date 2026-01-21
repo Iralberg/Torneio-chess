@@ -459,18 +459,18 @@ function getRating(nome) {
 
 // Entra perdedor na fila sem duplicar
 function vencedorW(i, nome) {
-   const partida = estado.winners[i];
-   const perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
+    const partida = estado.winners[i];
+    const perdedor = partida.p1 === nome ? partida.p2 : partida.p1;
     if (!estado.winners[i] || estado.winners[i].winner) return;
-   
-if (perdedor !== "BYE") {
-    if (!estado.losersQueue.includes(perdedor)) {
-        estado.losersQueue.push(perdedor);
+
+    if (perdedor !== "BYE") {
+        if (!estado.losersQueue.includes(perdedor)) {
+            estado.losersQueue.push(perdedor);
+        }
+        if (!estado.losersHistorico.includes(perdedor)) {
+            estado.losersHistorico.push(perdedor);
+        }
     }
-    if (!estado.losersHistorico.includes(perdedor)) {
-        estado.losersHistorico.push(perdedor);
-    }
-}
 
 
 
@@ -487,19 +487,19 @@ if (perdedor !== "BYE") {
     }
 
 
-salvarEstado();
-renderTudo();
+    salvarEstado();
+    renderTudo();
 }
 function renderWinners() {
     const container = document.getElementById("winners");
     container.innerHTML = "";
 
     estado.winners.forEach((partida, index) => {
-estado.winners.forEach(m => {
-    if (m.winner !== null && m.winner !== "__WO__" && typeof m.winner !== "string") {
-        m.winner = null;
-    }
-});
+        estado.winners.forEach(m => {
+            if (m.winner !== null && m.winner !== "__WO__" && typeof m.winner !== "string") {
+                m.winner = null;
+            }
+        });
 
         // GARANTIA DE ESTADO (crítico)
         if (partida.winner === undefined) {
@@ -512,11 +512,21 @@ estado.winners.forEach(m => {
         const p1 = document.createElement("button");
         p1.textContent = partida.p1;
         p1.disabled = partida.winner !== null || partida.p1 === "BYE";
+
+        if (partida.p1 === "BYE") {
+            p1.classList.add("bye-btn");
+        }
+
         p1.onclick = () => vencedorW(index, partida.p1);
 
         const p2 = document.createElement("button");
         p2.textContent = partida.p2;
         p2.disabled = partida.winner !== null || partida.p2 === "BYE";
+
+        if (partida.p2 === "BYE") {
+            p2.classList.add("bye-btn");
+        }
+
         p2.onclick = () => vencedorW(index, partida.p2);
 
         const wo = document.createElement("button");
@@ -544,8 +554,8 @@ function renderTudo() {
     renderWinners();
     renderLosers();
     montarFinal();
-    atualizarSelects(); 
-   
+    atualizarSelects();
+
 }
 
 
@@ -717,9 +727,9 @@ function renderLosers() {
 
 // Processa vencedor dos losers e avança rodada
 function alterarAlgo() {
-    let nomeJogador=document.getElementById('nomeJogador')
-  let   ratingJogador=document.getElementById('ratingJogador')
-    estado.jogadores.push({nome:nomeJogador.value,rating:Number(ratingJogador.value)})
+    let nomeJogador = document.getElementById('nomeJogador')
+    let ratingJogador = document.getElementById('ratingJogador')
+    estado.jogadores.push({ nome: nomeJogador.value, rating: Number(ratingJogador.value) })
     salvarEstado()
     renderTudo()
 }
@@ -920,7 +930,7 @@ function resetarLosers() {
 
 // ---------- RESET TOTAL ----------
 function resetarTudo() {
-    
+
     estado = {
         versao: ESTADO_VERSAO,
         jogadores: [],
