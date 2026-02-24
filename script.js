@@ -140,7 +140,24 @@ function shuffle(arr) {
     }
     return arr;
 }
+// Bye
+function aplicarByePrimeiroObjetos(lista) {
 
+    if (lista.length % 2 === 0) {
+        return { lista: lista, bye: null };
+    }
+
+    let indice = Math.floor(Math.random() * lista.length);
+
+    let bye = lista[indice];
+
+    let novaLista = lista.filter(j => j !== bye);
+
+    return {
+        lista: novaLista,
+        bye: bye
+    };
+}
 function seedPorRating(jogs, randomizaEmpates = true) {
     let copia = jogs.map(j => ({ ...j }));
 
@@ -214,31 +231,65 @@ function iniciarManual() {
 
 // ---------- SORTEIO ----------
 function gerarAutomatico() {
+
     estado.modo = "sorteio";
 
-    if (estado.jogadores.length < 2) return alert("Poucos jogadores!");
+    if (estado.jogadores.length < 2)
+        return alert("Poucos jogadores!");
 
-    let emb = [...estado.jogadores].sort(() => Math.random() - 0.5);
+    let emb = [...estado.jogadores];
+
+    // BYE PRIMEIRO
+    let resultado = aplicarByePrimeiroObjetos(emb);
+
+    emb = resultado.lista;
+    let bye = resultado.bye;
+
+    // depois embaralha
+    emb.sort(() => Math.random() - 0.5);
 
     estado.winners = [];
+
     for (let i = 0; i < emb.length; i += 2) {
+
         estado.winners.push({
             p1: emb[i].nome,
-            p2: emb[i + 1] ? emb[i + 1].nome : "BYE"
-
+            p2: emb[i + 1].nome
         });
+
     }
-    let poupLoser = document.getElementById('popupLosersConteudo')
-    poupLoser.innerHTML = ''
+
+    if (bye) {
+
+        estado.winners.push({
+            p1: bye.nome,
+            p2: "BYE"
+        });
+
+    }
+
     iniciarTorneio();
 }
 function iniciarPorRating() {
+    if (estado.jogadores.length < 2)
+        return alert("Poucos jogadores!");
+
+    estado.modo = "rating";
+
+    let lista = [...estado.jogadores]
+        .sort((a, b) => b.rating - a.rating);
+
+    // BYE PRIMEIRO
+    let resultado = aplicarByePrimeiroObjetos(lista);
+
+    lista = resultado.lista;
+    let bye = resultado.bye;
     if (estado.jogadores.length < 2) return alert("Poucos jogadores!");
 
     estado.modo = "rating";
 
     // Ordena do maior pro menor rating
-    let lista = [...estado.jogadores].sort((a, b) => b.rating - a.rating);
+
 
     // ---------- EMPARELHAMENTO (400 + fallback) ----------
     let usados = new Set();
@@ -288,20 +339,24 @@ function iniciarPorRating() {
         }
     }
 
-    // BYE somente se número for ímpar
-    if (lista.length % 2 === 1) {
-        for (let i = 0; i < lista.length; i++) {
-            if (!usados.has(i)) {
-                pares.push({
-                    p1: lista[i].nome,
-                    p2: "BYE"
-                });
-                break;
-            }
-        }
+    if (bye) {
+
+        pares.push({
+            p1: bye.nome,
+            p2: "BYE"
+        });
+
     }
 
-    estado.winners = pares;
+  // Colocar BYE como primeira partida
+let byeMatch = pares.find(p => p.p2 === "BYE");
+
+if (byeMatch) {
+    pares = pares.filter(p => p.p2 !== "BYE");
+    pares.unshift(byeMatch);
+}
+
+estado.winners = pares;
     iniciarTorneio();
 }
 
@@ -351,14 +406,38 @@ function avancarWinners() {
 
     const novaRodada = [];
 
-    for (let i = 0; i < vencedores.length; i += 2) {
+    // for (let i = 0; i < vencedores.length; i += 2) {
+    //     novaRodada.push({
+    //         p1: vencedores[i],
+    //         p2: vencedores[i + 1] ?? "BYE",
+    //         winner: null
+    //     });
+    // }
+    let objs = vencedores.map(n => ({ nome: n }));
+
+    let resultado = aplicarByePrimeiroObjetos(objs);
+
+    objs = resultado.lista;
+    let bye = resultado.bye;
+
+    let lista = objs.map(o => o.nome);
+
+    for (let i = 0; i < lista.length; i += 2) {
         novaRodada.push({
-            p1: vencedores[i],
-            p2: vencedores[i + 1] ?? "BYE",
+            p1: lista[i],
+            p2: lista[i + 1],
             winner: null
         });
     }
+    if(bye){
 
+    novaRodada.push({
+        p1: bye.nome,
+        p2:"BYE",
+        winner:null
+    });
+
+}
     estado.winners = novaRodada;
 }
 
@@ -642,31 +721,56 @@ function iniciarLosers() {
 // ---------- GERAR PARES DE LOSERS ----------
 
 function gerarLosers() {
+
     const modo = document.getElementById("modoLosers").value;
+
     let lista = [...estado.losersQueue];
-    estado.losersQueue = [];  // limpa fila para não duplicar
+
+    estado.losersQueue = [];
     estado.losersSeeded = true;
 
-    if (modo === "aleatorio") {
-        lista = shuffle(lista);
-    } else if (modo === "rating") {
-        lista.sort((a, b) => getRating(b) - getRating(a));
-    }
-
-    // Gera os pares
     estado.losers = [];
+
+    // transformar nomes em objetos
+    let objs = lista.map(n => ({ nome: n }));
+
+    // ---------- BYE PRIMEIRO ----------
+    let resultado = aplicarByePrimeiroObjetos(objs);
+
+    objs = resultado.lista;
+    let bye = resultado.bye;
+
+    lista = objs.map(o => o.nome);
+
+    // ---------- EMPARELHAMENTO ----------
     for (let i = 0; i < lista.length; i += 2) {
+
         estado.losers.push({
             p1: lista[i],
-            p2: lista[i + 1] ?? "BYE",
+            p2: lista[i + 1],
             winner: null
         });
+
+    }
+
+    // ---------- BYE COMO PRIMEIRA PARTIDA ----------
+    if (bye) {
+
+        estado.losers.unshift({
+            p1: bye.nome,
+            p2: "BYE",
+            winner: null
+        });
+
     }
 
     renderLosers();
-    document.getElementById("opcoesLosers").innerHTML = ""; // remove seleção
+
+    document.getElementById("opcoesLosers").innerHTML = "";
+
     salvarEstado();
-    renderTudo()
+
+    renderTudo();
 }
 
 
