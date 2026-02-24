@@ -267,7 +267,8 @@ function gerarAutomatico() {
         });
 
     }
-
+    resetarLosers();
+    limparStatus();
     iniciarTorneio();
 }
 function iniciarPorRating() {
@@ -348,15 +349,17 @@ function iniciarPorRating() {
 
     }
 
-  // Colocar BYE como primeira partida
-let byeMatch = pares.find(p => p.p2 === "BYE");
+    // Colocar BYE como primeira partida
+    let byeMatch = pares.find(p => p.p2 === "BYE");
 
-if (byeMatch) {
-    pares = pares.filter(p => p.p2 !== "BYE");
-    pares.unshift(byeMatch);
-}
+    if (byeMatch) {
+        pares = pares.filter(p => p.p2 !== "BYE");
+        pares.unshift(byeMatch);
+    }
 
-estado.winners = pares;
+    estado.winners = pares;
+    resetarLosers();
+    limparStatus();
     iniciarTorneio();
 }
 
@@ -429,15 +432,15 @@ function avancarWinners() {
             winner: null
         });
     }
-    if(bye){
+    if (bye) {
 
-    novaRodada.push({
-        p1: bye.nome,
-        p2:"BYE",
-        winner:null
-    });
+        novaRodada.push({
+            p1: bye.nome,
+            p2: "BYE",
+            winner: null
+        });
 
-}
+    }
     estado.winners = novaRodada;
 }
 

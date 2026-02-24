@@ -11,8 +11,12 @@ body {
     padding: 20px;
     height: 100vh;
 }
-
+main{
+    display: flex;
+    flex-flow: column nowrap;
+}
 .box {
+width: 80vw;
     background: white;
     padding: 15px;
     margin-bottom: 20px;
